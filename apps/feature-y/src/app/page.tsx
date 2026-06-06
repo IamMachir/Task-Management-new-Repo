@@ -1,8 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import {
-  StatsCard, TaskCard, TaskModal, FilterBar,
-  ProgressBar, ProgressCircle, Button, EmptyState, ConfirmationDialog
+  Badge, Button, Card, Checkbox, ConfirmationDialog, EmptyState,
+  FilterBar, ProgressBar, ProgressCircle, StatsCard, TaskCard, TaskModal,
+  Tabs, Tooltip
 } from "@cbsd/ui-components";
 import type { TaskFormData } from "@cbsd/ui-components";
 import type { Task, Status } from "@cbsd/utils";
@@ -70,38 +71,32 @@ export default function PersonalFocusPage() {
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              {/* Mini Pomodoro */}
-              <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2">
-                <span className="text-sm font-mono font-bold text-slate-700">{formatPomodoro(pomodoroTime)}</span>
-                <button
-                  onClick={() => setPomodoroActive(!pomodoroActive)}
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${pomodoroActive ? "bg-red-500 text-white" : "bg-violet-500 text-white"}`}
-                >
-                  {pomodoroActive ? "⏸" : "▶"}
-                </button>
+            <div className="flex flex-col gap-3 items-end sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2">
+                  <span className="text-sm font-mono font-bold text-slate-700">{formatPomodoro(pomodoroTime)}</span>
+                  <button
+                    onClick={() => setPomodoroActive(!pomodoroActive)}
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs ${pomodoroActive ? "bg-red-500 text-white" : "bg-violet-500 text-white"}`}
+                  >
+                    {pomodoroActive ? "⏸" : "▶"}
+                  </button>
+                </div>
+                <Checkbox
+                  label="Pomodoro active"
+                  checked={pomodoroActive}
+                  onChange={(e) => setPomodoroActive(e.target.checked)}
+                />
               </div>
-              <Button onClick={() => { setEditingTask(null); setModalOpen(true); }} size="sm" variant="primary">
-                + Task
-              </Button>
+              <div className="flex items-center gap-3">
+                <Tabs items={TABS} activeId={tab} onChange={(id) => setTab(id as Tab)} />
+                <Tooltip content="Quickly add a new task to your personal list">
+                  <Button onClick={() => { setEditingTask(null); setModalOpen(true); }} size="sm" variant="primary">
+                    + Task
+                  </Button>
+                </Tooltip>
+              </div>
             </div>
-          </div>
-
-          {/* Tabs */}
-          <div className="flex gap-1 mt-3">
-            {TABS.map((t) => (
-              <button
-                key={t.id}
-                onClick={() => setTab(t.id)}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
-                  tab === t.id
-                    ? "bg-violet-600 text-white shadow-sm"
-                    : "text-slate-500 hover:bg-slate-100"
-                }`}
-              >
-                {t.icon} {t.label}
-              </button>
-            ))}
           </div>
         </div>
       </header>
@@ -131,8 +126,11 @@ export default function PersonalFocusPage() {
             </div>
 
             {/* Week view */}
-            <div className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
-              <h2 className="text-sm font-bold text-slate-700 mb-3">This Week</h2>
+            <Card className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-sm font-bold text-slate-700">This Week</h2>
+                <Badge variant="info">{weekDates.length} days</Badge>
+              </div>
               <div className="grid grid-cols-7 gap-2">
                 {weekDates.map((d, i) => {
                   const dayStr = d.toISOString().split("T")[0];
@@ -149,7 +147,7 @@ export default function PersonalFocusPage() {
                   );
                 })}
               </div>
-            </div>
+            </Card>
 
             {/* Today's tasks */}
             <div>

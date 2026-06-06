@@ -2,26 +2,56 @@
 import React from "react";
 import { cn } from "./utils";
 
-export interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
+export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "size"> {
   label?: string;
-  description?: string;
+  size?: "sm" | "md" | "lg";
+  color?: "indigo" | "emerald" | "rose";
 }
 
-export const Checkbox = React.forwardRef<HTMLInputElement, CheckboxProps>(
-  ({ label, description, className, id, ...props }, ref) => (
-    <label className={cn("flex items-start gap-3 text-sm", className)} htmlFor={id}>
+const SIZE_MAP = {
+  sm: "w-3.5 h-3.5",
+  md: "w-4.5 h-4.5",
+  lg: "w-6 h-6",
+};
+
+const COLOR_MAP = {
+  indigo: "text-indigo-600 focus:ring-indigo-500",
+  emerald: "text-emerald-600 focus:ring-emerald-500",
+  rose: "text-rose-600 focus:ring-rose-500",
+};
+
+export function Checkbox({
+  label,
+  size = "md",
+  color = "indigo",
+  className,
+  id,
+  ...props
+}: CheckboxProps) {
+  const checkboxId = id || React.useId();
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
       <input
-        id={id}
-        ref={ref}
         type="checkbox"
-        className="mt-1 h-4 w-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+        id={checkboxId}
+        className={cn(
+          "rounded border-slate-300 transition-colors cursor-pointer",
+          SIZE_MAP[size],
+          COLOR_MAP[color],
+        )}
         {...props}
       />
-      <span className="flex flex-col">
-        {label && <span className="font-medium text-slate-700">{label}</span>}
-        {description && <span className="text-xs text-slate-500">{description}</span>}
-      </span>
-    </label>
-  )
-);
-Checkbox.displayName = "Checkbox";
+      {label && (
+        <label
+          htmlFor={checkboxId}
+          className={cn(
+            "text-slate-700 font-medium cursor-pointer select-none",
+            size === "sm" ? "text-xs" : size === "md" ? "text-sm" : "text-base"
+          )}
+        >
+          {label}
+        </label>
+      )}
+    </div>
+  );
+}

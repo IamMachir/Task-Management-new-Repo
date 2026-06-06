@@ -1,9 +1,9 @@
 "use client";
 import React, { useState } from "react";
 import {
-  Badge, Button, Card, Checkbox, ConfirmationDialog, EmptyState,
-  FilterBar, ProgressBar, ProgressCircle, StatsCard, TaskCard, TaskModal,
-  Tabs, Tooltip
+  StatsCard, TaskCard, TaskModal, FilterBar,
+  ProgressBar, ProgressCircle, Button, EmptyState, ConfirmationDialog,
+  Checkbox, Card, CardHeader, CardTitle, CardContent, Badge, Alert, Accordion, Tooltip, Skeleton, Switch, Modal, cn
 } from "@cbsd/ui-components";
 import type { TaskFormData } from "@cbsd/ui-components";
 import type { Task, Status } from "@cbsd/utils";
@@ -22,6 +22,9 @@ export default function PersonalFocusPage() {
   const [search, setSearch] = useState("");
   const [pomodoroActive, setPomodoroActive] = useState(false);
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
+  const [aboutModalOpen, setAboutModalOpen] = useState(false);
+  const [showHabits, setShowHabits] = useState(true);
+  const [isLoadingStats, setIsLoadingStats] = useState(false); // For demoing skeleton
 
   const { tasks, habits, addTask, updateTask, deleteTask, toggleTaskDone, toggleHabit, todayTasks, stats, completion, score } = usePersonalTasks();
 
@@ -61,18 +64,19 @@ export default function PersonalFocusPage() {
         <div className="max-w-4xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 cursor-pointer" onClick={() => setAboutModalOpen(true)}>
                 <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center">
                   <span className="text-white font-bold text-sm">PF</span>
                 </div>
                 <div>
-                  <h1 className="text-lg font-bold text-slate-900">PersonalFocus</h1>
+                  <h1 className="text-lg font-bold text-slate-900 hover:text-violet-600 transition-colors">PersonalFocus</h1>
                   <p className="text-xs text-slate-400">{formatDate(new Date(), "long")}</p>
                 </div>
               </div>
             </div>
-            <div className="flex flex-col gap-3 items-end sm:flex-row sm:items-center sm:justify-between">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center gap-3">
+              {/* Mini Pomodoro */}
+              <Tooltip content={pomodoroActive ? "Pause Timer" : "Start Focus Session"}>
                 <div className="flex items-center gap-2 bg-slate-100 rounded-xl px-3 py-2">
                   <span className="text-sm font-mono font-bold text-slate-700">{formatPomodoro(pomodoroTime)}</span>
                   <button
@@ -82,55 +86,83 @@ export default function PersonalFocusPage() {
                     {pomodoroActive ? "⏸" : "▶"}
                   </button>
                 </div>
-                <Checkbox
-                  label="Pomodoro active"
-                  checked={pomodoroActive}
-                  onChange={(e) => setPomodoroActive(e.target.checked)}
-                />
-              </div>
-              <div className="flex items-center gap-3">
-                <Tabs items={TABS} activeId={tab} onChange={(id) => setTab(id as Tab)} />
-                <Tooltip content="Quickly add a new task to your personal list">
-                  <Button onClick={() => { setEditingTask(null); setModalOpen(true); }} size="sm" variant="primary">
-                    + Task
-                  </Button>
-                </Tooltip>
-              </div>
+              </Tooltip>
+              <Button onClick={() => { setEditingTask(null); setModalOpen(true); }} size="sm" variant="primary">
+                + Task
+              </Button>
             </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-1 mt-3">
+            {TABS.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setTab(t.id)}
+                className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-all ${
+                  tab === t.id
+                    ? "bg-violet-600 text-white shadow-sm"
+                    : "text-slate-500 hover:bg-slate-100"
+                }`}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
           </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-6 space-y-6">
+        <Alert variant="success" title="Daily Tip" className="shadow-sm">
+          Stay hydrated! Taking short breaks every 45 minutes improves focus and productivity.
+        </Alert>
 
         {/* TODAY TAB */}
         {tab === "today" && (
           <div className="space-y-6">
             {/* Score + progress */}
             <div className="bg-white rounded-2xl border border-purple-100 p-6 shadow-sm flex items-center gap-8">
-              <ProgressCircle
-                value={score}
-                size={88}
-                strokeWidth={8}
-                color="#7c3aed"
-                label={<div className="text-center"><div className="text-lg font-bold text-slate-800">{score}</div><div className="text-xs text-slate-400">score</div></div>}
-              />
-              <div className="flex-1 space-y-3">
-                <ProgressBar value={completion} label="Tasks done" color="indigo" />
-                <ProgressBar value={todayTasks.filter((t) => t.status === "done").length} max={Math.max(1, todayTasks.length)} label="Today's tasks" color="indigo" />
-              </div>
-              <div className="text-center">
-                <div className="text-3xl font-bold text-violet-600">{stats.done}</div>
-                <div className="text-xs text-slate-400">completed</div>
-              </div>
+              {isLoadingStats ? (
+                <div className="flex items-center gap-8 w-full">
+                  <Skeleton className="w-[88px] h-[88px] rounded-full" />
+                  <div className="flex-1 space-y-4">
+                    <Skeleton className="h-4 w-full" />
+                    <Skeleton className="h-4 w-3/4" />
+                  </div>
+                  <div className="space-y-2">
+                    <Skeleton className="h-8 w-12 mx-auto" />
+                    <Skeleton className="h-3 w-16 mx-auto" />
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <ProgressCircle
+                    value={score}
+                    size={88}
+                    strokeWidth={8}
+                    color="#7c3aed"
+                    label={<div className="text-center"><div className="text-lg font-bold text-slate-800">{score}</div><div className="text-xs text-slate-400">score</div></div>}
+                  />
+                  <div className="flex-1 space-y-3">
+                    <ProgressBar value={completion} label="Tasks done" color="indigo" />
+                    <ProgressBar value={todayTasks.filter((t) => t.status === "done").length} max={Math.max(1, todayTasks.length)} label="Today's tasks" color="indigo" />
+                  </div>
+                  <div className="text-center" onClick={() => { setIsLoadingStats(true); setTimeout(() => setIsLoadingStats(false), 2000); }}>
+                    <div className="text-3xl font-bold text-violet-600">{stats.done}</div>
+                    <div className="text-xs text-slate-400">completed</div>
+                  </div>
+                </>
+              )}
             </div>
 
+            <Accordion title="How to improve your score?" className="bg-white">
+              Your productivity score is calculated based on completed tasks, habit streaks, and meeting deadlines. 
+              Complete high-priority tasks early in the day to get a bonus!
+            </Accordion>
+
             {/* Week view */}
-            <Card className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h2 className="text-sm font-bold text-slate-700">This Week</h2>
-                <Badge variant="info">{weekDates.length} days</Badge>
-              </div>
+            <div className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
+              <h2 className="text-sm font-bold text-slate-700 mb-3">This Week</h2>
               <div className="grid grid-cols-7 gap-2">
                 {weekDates.map((d, i) => {
                   const dayStr = d.toISOString().split("T")[0];
@@ -147,7 +179,7 @@ export default function PersonalFocusPage() {
                   );
                 })}
               </div>
-            </Card>
+            </div>
 
             {/* Today's tasks */}
             <div>
@@ -201,49 +233,64 @@ export default function PersonalFocusPage() {
         {/* HABITS TAB */}
         {tab === "habits" && (
           <div className="space-y-4">
-            <h2 className="text-sm font-bold text-slate-700">Daily Habits</h2>
-            {habits.map((habit) => {
-              const todayEntry = habit.entries.find((e) => e.date === today);
-              const doneToday = todayEntry?.completed ?? false;
-              const last7 = Array.from({ length: 7 }, (_, i) => {
-                const d = new Date();
-                d.setDate(d.getDate() - (6 - i));
-                const ds = d.toISOString().split("T")[0];
-                return habit.entries.find((e) => e.date === ds)?.completed ?? false;
-              });
-              return (
-                <div key={habit.id} className="bg-white rounded-2xl border border-purple-100 p-5 shadow-sm">
-                  <div className="flex items-start justify-between">
-                    <div>
-                      <h3 className="text-sm font-bold text-slate-800">{habit.name}</h3>
-                      {habit.description && <p className="text-xs text-slate-400 mt-0.5">{habit.description}</p>}
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className="text-right">
-                        <div className="text-lg font-bold text-violet-600">🔥 {habit.streak}</div>
-                        <div className="text-xs text-slate-400">day streak</div>
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-sm font-bold text-slate-700">Daily Habits</h2>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-500 font-medium">Show Habits</span>
+                <Switch checked={showHabits} onChange={setShowHabits} />
+              </div>
+            </div>
+            {showHabits ? (
+              <div className="space-y-4">
+                {habits.map((habit) => {
+                  const todayEntry = habit.entries.find((e) => e.date === today);
+                  const doneToday = todayEntry?.completed ?? false;
+                  const last7 = Array.from({ length: 7 }, (_, i) => {
+                    const d = new Date();
+                    d.setDate(d.getDate() - (6 - i));
+                    const ds = d.toISOString().split("T")[0];
+                    return habit.entries.find((e) => e.date === ds)?.completed ?? false;
+                  });
+                  return (
+                    <Card key={habit.id} padding="sm" className="border-purple-100">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            checked={doneToday}
+                            onChange={() => toggleHabit(habit.id, today)}
+                            size="lg"
+                            color="emerald"
+                            className="mt-1"
+                          />
+                          <div>
+                            <h3 className={cn("text-sm font-bold text-slate-800", doneToday && "line-through text-slate-400")}>{habit.name}</h3>
+                            {habit.description && <p className="text-xs text-slate-400 mt-0.5">{habit.description}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="text-right">
+                            <Badge variant="warning" className="text-sm font-bold">
+                              🔥 {habit.streak}
+                            </Badge>
+                            <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold mt-0.5">streak</div>
+                          </div>
+                        </div>
                       </div>
-                      <button
-                        onClick={() => toggleHabit(habit.id, today)}
-                        className={`w-9 h-9 rounded-xl flex items-center justify-center text-sm font-bold transition-all ${
-                          doneToday ? "bg-emerald-500 text-white scale-105" : "bg-slate-100 text-slate-400 hover:bg-violet-100 hover:text-violet-600"
-                        }`}
-                      >
-                        {doneToday ? "✓" : "○"}
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-3 flex items-center gap-1.5">
-                    <span className="text-xs text-slate-400 mr-1">Last 7 days</span>
-                    {last7.map((done, i) => (
-                      <div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs ${done ? "bg-violet-500 text-white" : "bg-slate-100 text-slate-400"}`}>
-                        {["S","M","T","W","T","F","S"][(new Date().getDay() - 6 + i + 7) % 7]}
+                      <div className="mt-4 flex items-center gap-1.5">
+                        <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1">Last 7 days</span>
+                        {last7.map((done, i) => (
+                          <div key={i} className={`w-7 h-7 rounded-lg flex items-center justify-center text-xs font-medium transition-colors ${done ? "bg-violet-500 text-white" : "bg-slate-100 text-slate-400"}`}>
+                            {["S","M","T","W","T","F","S"][(new Date().getDay() - 6 + i + 7) % 7]}
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                </div>
-              );
-            })}
+                    </Card>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState title="Habits Hidden" description="Turn on the switch to see your daily habits." />
+            )}
           </div>
         )}
 
@@ -329,6 +376,42 @@ export default function PersonalFocusPage() {
         onConfirm={() => { if (deleteTarget) deleteTask(deleteTarget); setDeleteTarget(null); }}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      <Modal
+        isOpen={aboutModalOpen}
+        onClose={() => setAboutModalOpen(false)}
+        title="About PersonalFocus"
+        size="sm"
+      >
+        <div className="space-y-4">
+          <div className="flex justify-center py-4">
+            <div className="w-20 h-20 rounded-3xl bg-gradient-to-br from-violet-500 to-purple-600 flex items-center justify-center shadow-lg shadow-purple-200">
+              <span className="text-white font-bold text-3xl">PF</span>
+            </div>
+          </div>
+          <div className="text-center space-y-2">
+            <h2 className="text-xl font-bold text-slate-900">PersonalFocus v1.0</h2>
+            <p className="text-sm text-slate-500">Your ultimate productivity companion.</p>
+          </div>
+          <Card variant="flat" padding="sm" className="mt-4">
+            <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">New Features</h4>
+            <ul className="space-y-2">
+              <li className="flex items-center gap-2 text-sm text-slate-600">
+                <Badge variant="success" size="xs">NEW</Badge> Checkbox-based habit tracking
+              </li>
+              <li className="flex items-center gap-2 text-sm text-slate-600">
+                <Badge variant="success" size="xs">NEW</Badge> Generic Card containers
+              </li>
+              <li className="flex items-center gap-2 text-sm text-slate-600">
+                <Badge variant="success" size="xs">NEW</Badge> Reusable Modal system
+              </li>
+            </ul>
+          </Card>
+          <div className="pt-4 flex justify-center">
+            <Button variant="secondary" onClick={() => setAboutModalOpen(false)}>Close</Button>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

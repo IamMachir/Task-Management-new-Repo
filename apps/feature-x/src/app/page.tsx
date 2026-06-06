@@ -1,9 +1,9 @@
 "use client";
 import React, { useState, useCallback } from "react";
 import {
-  Badge, Button, Card, Checkbox, ConfirmationDialog, EmptyState,
-  FilterBar, KanbanColumn, Sidebar, StatsCard, TaskModal,
-  Tooltip, Tabs, UserAvatar
+  KanbanColumn, TaskModal, StatsCard, FilterBar,
+  Sidebar, EmptyState, ConfirmationDialog, UserAvatar, Button,
+  Card, CardHeader, CardTitle, Badge, Alert, Tooltip, Switch, Skeleton
 } from "@cbsd/ui-components";
 import type { TaskFormData } from "@cbsd/ui-components";
 import type { Task, Status } from "@cbsd/utils";
@@ -14,7 +14,7 @@ import {
 import { useTasks } from "../hooks/useTasks";
 import { MOCK_PROJECTS, MOCK_MEMBERS } from "../data/mockData";
 
-const KANBAN_STATUSES = ["todo", "in-progress", "done"] as const;
+const KANBAN_STATUSES: Status[] = ["todo", "in-progress", "done"];
 
 export default function TeamFlowPage() {
   const [activeProject, setActiveProject] = useState<string>("all");
@@ -25,19 +25,13 @@ export default function TeamFlowPage() {
   const [search, setSearch] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [view, setView] = useState<"kanban" | "stats">("kanban");
-  const [showCompleted, setShowCompleted] = useState(true);
-
-  const VIEW_TABS: { id: "kanban" | "stats"; label: string; icon: React.ReactNode }[] = [
-    { id: "kanban", label: "Kanban", icon: <span className="text-xs">🗂</span> },
-    { id: "stats", label: "Stats", icon: <span className="text-xs">📊</span> },
-  ];
+  const [isCompact, setIsCompact] = useState(false);
+  const [showWelcomeAlert, setShowWelcomeAlert] = useState(true);
 
   const projectId = activeProject === "all" ? undefined : activeProject;
   const { tasks, addTask, updateTask, deleteTask, moveTask, stats, grouped } = useTasks(projectId);
 
-  const filtered = filterTasks(tasks, { search: search || undefined }).filter(
-    (task) => showCompleted || task.status !== "done"
-  );
+  const filtered = filterTasks(tasks, { search: search || undefined });
 
   const filteredGrouped = {
     todo: filtered.filter((t) => t.status === "todo"),
@@ -54,7 +48,7 @@ export default function TeamFlowPage() {
     if (editingTask) {
       updateTask(editingTask.id, { ...data, tags, status: data.status as Status });
     } else {
-      addTask({ ...data, tags, status: data.status ? (data.status as Status) : defaultStatus });
+      addTask({ ...data, tags, status: data.status as Status });
     }
     setEditingTask(null);
   }
@@ -146,28 +140,23 @@ export default function TeamFlowPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-slate-100 px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-shrink-0">
+        <header className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between flex-shrink-0">
           <div>
             <h1 className="text-lg font-bold text-slate-900">
               {activeProjectData ? activeProjectData.name : "All Projects"}
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">{tasks.length} tasks · {completionPct}% complete</p>
-            <Badge variant={view === "stats" ? "success" : "info"} className="mt-2">
-              {view === "stats" ? "Statistics View" : "Kanban View"}
-            </Badge>
           </div>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <Tabs items={VIEW_TABS} activeId={view} onChange={(id) => setView(id as "kanban" | "stats")} />
-            <Checkbox
-              label="Show completed"
-              checked={showCompleted}
-              onChange={(e) => setShowCompleted(e.target.checked)}
-            />
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 mr-2">
+              <span className="text-xs text-slate-500 font-medium">Compact</span>
+              <Switch checked={isCompact} onChange={setIsCompact} />
+            </div>
             <FilterBar
               search={search}
               onSearchChange={setSearch}
             />
-            <Tooltip content="Add a new task to the workflow">
+            <Tooltip content="Create a new task in this project">
               <Button onClick={() => { setEditingTask(null); setModalOpen(true); }} size="md">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
@@ -179,117 +168,134 @@ export default function TeamFlowPage() {
         </header>
 
         {/* Stats strip */}
-        <Card className="border-b border-slate-100 px-6 py-3 flex items-center gap-6 flex-shrink-0">
+        <div className="bg-white border-b border-slate-100 px-6 py-3 flex items-center gap-6 flex-shrink-0">
           {[
-            { label: "Total", value: stats.total, color: "text-slate-700" },
-            { label: "To Do", value: stats.todo, color: "text-slate-600" },
-            { label: "In Progress", value: stats.inProgress, color: "text-blue-600" },
-            { label: "Done", value: stats.done, color: "text-emerald-600" },
-            { label: "Overdue", value: stats.overdue, color: "text-red-600" },
+            { label: "Total", value: stats.total, color: "primary" },
+            { label: "To Do", value: stats.todo, color: "secondary" },
+            { label: "In Progress", value: stats.inProgress, color: "primary" },
+            { label: "Done", value: stats.done, color: "success" },
+            { label: "Overdue", value: stats.overdue, color: "error" },
           ].map(({ label, value, color }) => (
             <div key={label} className="flex items-center gap-1.5">
-              <span className={`text-lg font-bold ${color}`}>{value}</span>
-              <span className="text-xs text-slate-400">{label}</span>
+              <Badge variant={color as any} size="md" className="font-bold">{value}</Badge>
+              <span className="text-xs text-slate-400 font-medium">{label}</span>
             </div>
           ))}
           <div className="ml-auto flex-1 max-w-48">
-            <div className="flex justify-between text-xs text-slate-400 mb-1">
-              <span>Progress</span><span>{completionPct}%</span>
+            <div className="flex justify-between text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-1">
+              <span>Overall Progress</span><span>{completionPct}%</span>
             </div>
-            <div className="w-full bg-slate-100 rounded-full h-2">
-              <div className="bg-indigo-500 h-2 rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
+            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+              <div className="bg-indigo-500 h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${completionPct}%` }} />
             </div>
           </div>
-        </Card>
+        </div>
 
         {/* Main content */}
-        {view === "stats" ? (
-          <div className="flex-1 overflow-y-auto p-6">
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              <StatsCard title="Total Tasks" value={stats.total} subtitle="across all projects" color="indigo"
-                icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>}
-              />
-              <StatsCard title="In Progress" value={stats.inProgress} color="blue"
-                icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>}
-              />
-              <StatsCard title="Completed" value={stats.done} subtitle={`${completionPct}% completion`} color="emerald"
-                icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
-              />
-              <StatsCard title="Overdue" value={stats.overdue} color="red"
-                icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
-              />
-            </div>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-700 mb-4">Tasks by Project</h3>
-                <div className="space-y-3">
-                  {MOCK_PROJECTS.map((p) => {
-                    const ptasks = tasks.filter((t) => t.projectId === p.id);
-                    const pct = ptasks.length > 0 ? Math.round((ptasks.filter((t) => t.status === "done").length / ptasks.length) * 100) : 0;
-                    return (
-                      <div key={p.id}>
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-xs font-medium text-slate-700">{p.name}</span>
-                          <span className="text-xs text-slate-400">{ptasks.length} tasks · {pct}%</span>
-                        </div>
-                        <div className="w-full bg-slate-100 rounded-full h-2">
-                          <div className="h-2 rounded-full transition-all" style={{ width: `${pct}%`, background: p.color }} />
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {showWelcomeAlert && (
+            <Alert
+              variant="info"
+              title="Welcome to TeamFlow!"
+              className="mb-6"
+            >
+              <div className="flex justify-between items-center w-full">
+                <span>Manage your team's tasks efficiently with our new Kanban board.</span>
+                <button onClick={() => setShowWelcomeAlert(false)} className="text-xs font-bold underline">Dismiss</button>
               </div>
-              <div className="bg-white rounded-xl border border-slate-100 p-5 shadow-sm">
-                <h3 className="text-sm font-bold text-slate-700 mb-4">Team Workload</h3>
-                <div className="space-y-3">
-                  {MOCK_MEMBERS.map((m) => {
-                    const mtasks = tasks.filter((t) => t.assigneeId === m.id);
-                    return (
-                      <div key={m.id} className="flex items-center gap-3">
-                        <UserAvatar name={m.name} size="sm" />
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center mb-0.5">
-                            <span className="text-xs font-medium text-slate-700">{m.name}</span>
-                            <span className="text-xs text-slate-400">{mtasks.length} tasks</span>
+            </Alert>
+          )}
+
+          {view === "stats" ? (
+            <>
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                <StatsCard title="Total Tasks" value={stats.total} subtitle="across all projects" color="indigo"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>}
+                />
+                <StatsCard title="In Progress" value={stats.inProgress} color="blue"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>}
+                />
+                {/* Demo Skeleton */}
+                <div className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+                  <Skeleton className="h-4 w-24 mb-4" />
+                  <Skeleton className="h-8 w-16 mb-2" />
+                  <Skeleton className="h-3 w-32" />
+                </div>
+                <StatsCard title="Overdue" value={stats.overdue} color="red"
+                  icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>}
+                />
+              </div>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <Card variant="default" padding="md">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold text-slate-700">Tasks by Project</CardTitle>
+                  </CardHeader>
+                  <div className="space-y-4">
+                    {MOCK_PROJECTS.map((p) => {
+                      const ptasks = tasks.filter((t) => t.projectId === p.id);
+                      const pct = ptasks.length > 0 ? Math.round((ptasks.filter((t) => t.status === "done").length / ptasks.length) * 100) : 0;
+                      return (
+                        <div key={p.id}>
+                          <div className="flex justify-between items-center mb-1.5">
+                            <span className="text-xs font-bold text-slate-700">{p.name}</span>
+                            <Badge variant="ghost" size="xs" className="text-slate-400">{ptasks.length} tasks · {pct}%</Badge>
                           </div>
-                          <div className="w-full bg-slate-100 rounded-full h-1.5">
-                            <div className="bg-indigo-500 h-1.5 rounded-full" style={{ width: `${Math.min(100, (mtasks.length / Math.max(1, tasks.length / MOCK_MEMBERS.length)) * 50)}%` }} />
+                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: p.color }} />
                           </div>
                         </div>
-                      </div>
-                    );
-                  })}
-                </div>
+                      );
+                    })}
+                  </div>
+                </Card>
+
+                <Card variant="default" padding="md">
+                  <CardHeader>
+                    <CardTitle className="text-sm font-bold text-slate-700">Team Workload</CardTitle>
+                  </CardHeader>
+                  <div className="space-y-4">
+                    {MOCK_MEMBERS.map((m) => {
+                      const mtasks = tasks.filter((t) => t.assigneeId === m.id);
+                      const workload = Math.min(100, (mtasks.length / Math.max(1, tasks.length / MOCK_MEMBERS.length)) * 50);
+                      return (
+                        <div key={m.id} className="flex items-center gap-4">
+                          <UserAvatar name={m.name} size="md" />
+                          <div className="flex-1">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-xs font-bold text-slate-700">{m.name}</span>
+                              <Badge variant="secondary" size="xs">{mtasks.length} tasks</Badge>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-1.5 overflow-hidden">
+                              <div className="bg-indigo-500 h-full rounded-full transition-all duration-500" style={{ width: `${workload}%` }} />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </Card>
               </div>
-            </div>
-          </div>
-        ) : (
-          <div className="flex-1 overflow-x-auto p-6">
-            <div className="flex gap-4 h-full">
+            </>
+          ) : (
+           <div className="flex gap-6 h-full min-h-[500px]">
               {KANBAN_STATUSES.map((status) => (
                 <KanbanColumn
                   key={status}
+                  title={getStatusLabel(status)}
                   status={status}
-                  tasks={filteredGrouped[status].map((task) => {
-                    const member = getMember(task.assigneeId);
-                    return {
-                      ...task,
-                      assignee: member ? { name: member.name } : undefined,
-                      onClick: () => handleEdit(task),
-                      onEdit: () => handleEdit(task),
-                      onDelete: () => setDeleteTarget(task.id),
-                    };
-                  })}
-                  onAddTask={() => handleAddInColumn(status)}
+                  tasks={filteredGrouped[status]}
+                  onDrop={handleDrop}
                   onDragStart={handleDragStart}
-                  onDrop={(e) => handleDrop(e, status)}
+                  onAddTask={() => handleAddInColumn(status)}
+                  onEditTask={handleEdit}
+                  onDeleteTask={setDeleteTarget}
                   draggingId={draggingId}
+                  className={isCompact ? "scale-95 origin-top transition-transform" : ""}
                 />
               ))}
             </div>
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       <TaskModal

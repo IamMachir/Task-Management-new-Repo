@@ -1,8 +1,9 @@
 "use client";
 import React, { useState, useCallback } from "react";
 import {
-  KanbanColumn, TaskModal, StatsCard, FilterBar,
-  Sidebar, EmptyState, ConfirmationDialog, UserAvatar, Button
+  Badge, Button, Card, Checkbox, ConfirmationDialog, EmptyState,
+  FilterBar, KanbanColumn, Sidebar, StatsCard, TaskModal,
+  Tooltip, Tabs, UserAvatar
 } from "@cbsd/ui-components";
 import type { TaskFormData } from "@cbsd/ui-components";
 import type { Task, Status } from "@cbsd/utils";
@@ -13,7 +14,7 @@ import {
 import { useTasks } from "../hooks/useTasks";
 import { MOCK_PROJECTS, MOCK_MEMBERS } from "../data/mockData";
 
-const KANBAN_STATUSES: Status[] = ["todo", "in-progress", "done"];
+const KANBAN_STATUSES = ["todo", "in-progress", "done"] as const;
 
 export default function TeamFlowPage() {
   const [activeProject, setActiveProject] = useState<string>("all");
@@ -24,11 +25,19 @@ export default function TeamFlowPage() {
   const [search, setSearch] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [view, setView] = useState<"kanban" | "stats">("kanban");
+  const [showCompleted, setShowCompleted] = useState(true);
+
+  const VIEW_TABS: { id: "kanban" | "stats"; label: string; icon: React.ReactNode }[] = [
+    { id: "kanban", label: "Kanban", icon: <span className="text-xs">🗂</span> },
+    { id: "stats", label: "Stats", icon: <span className="text-xs">📊</span> },
+  ];
 
   const projectId = activeProject === "all" ? undefined : activeProject;
   const { tasks, addTask, updateTask, deleteTask, moveTask, stats, grouped } = useTasks(projectId);
 
-  const filtered = filterTasks(tasks, { search: search || undefined });
+  const filtered = filterTasks(tasks, { search: search || undefined }).filter(
+    (task) => showCompleted || task.status !== "done"
+  );
 
   const filteredGrouped = {
     todo: filtered.filter((t) => t.status === "todo"),
@@ -45,7 +54,7 @@ export default function TeamFlowPage() {
     if (editingTask) {
       updateTask(editingTask.id, { ...data, tags, status: data.status as Status });
     } else {
-      addTask({ ...data, status: defaultStatus, tags, status: data.status as Status });
+      addTask({ ...data, tags, status: data.status ? (data.status as Status) : defaultStatus });
     }
     setEditingTask(null);
   }
@@ -137,29 +146,40 @@ export default function TeamFlowPage() {
 
       <div className="flex-1 flex flex-col overflow-hidden">
         {/* Header */}
-        <header className="bg-white border-b border-slate-100 px-6 py-4 flex items-center justify-between flex-shrink-0">
+        <header className="bg-white border-b border-slate-100 px-6 py-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between flex-shrink-0">
           <div>
             <h1 className="text-lg font-bold text-slate-900">
               {activeProjectData ? activeProjectData.name : "All Projects"}
             </h1>
             <p className="text-xs text-slate-400 mt-0.5">{tasks.length} tasks · {completionPct}% complete</p>
+            <Badge variant={view === "stats" ? "success" : "info"} className="mt-2">
+              {view === "stats" ? "Statistics View" : "Kanban View"}
+            </Badge>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <Tabs items={VIEW_TABS} activeId={view} onChange={(id) => setView(id as "kanban" | "stats")} />
+            <Checkbox
+              label="Show completed"
+              checked={showCompleted}
+              onChange={(e) => setShowCompleted(e.target.checked)}
+            />
             <FilterBar
               search={search}
               onSearchChange={setSearch}
             />
-            <Button onClick={() => { setEditingTask(null); setModalOpen(true); }} size="md">
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              New Task
-            </Button>
+            <Tooltip content="Add a new task to the workflow">
+              <Button onClick={() => { setEditingTask(null); setModalOpen(true); }} size="md">
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
+                </svg>
+                New Task
+              </Button>
+            </Tooltip>
           </div>
         </header>
 
         {/* Stats strip */}
-        <div className="bg-white border-b border-slate-100 px-6 py-3 flex items-center gap-6 flex-shrink-0">
+        <Card className="border-b border-slate-100 px-6 py-3 flex items-center gap-6 flex-shrink-0">
           {[
             { label: "Total", value: stats.total, color: "text-slate-700" },
             { label: "To Do", value: stats.todo, color: "text-slate-600" },
@@ -180,7 +200,7 @@ export default function TeamFlowPage() {
               <div className="bg-indigo-500 h-2 rounded-full transition-all duration-500" style={{ width: `${completionPct}%` }} />
             </div>
           </div>
-        </div>
+        </Card>
 
         {/* Main content */}
         {view === "stats" ? (

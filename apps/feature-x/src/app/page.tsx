@@ -129,9 +129,9 @@ export default function TeamFlowPage() {
         }
         footer={
           <div className="flex items-center gap-2">
-            <UserAvatar name="Alex Johnson" size="sm" />
+            <UserAvatar name="Dawit Bekele" size="sm" />
             <div>
-              <p className="text-xs font-medium text-slate-300">Alex Johnson</p>
+              <p className="text-xs font-medium text-slate-300">Dawit Bekele</p>
               <p className="text-xs text-slate-500">Engineering Lead</p>
             </div>
           </div>

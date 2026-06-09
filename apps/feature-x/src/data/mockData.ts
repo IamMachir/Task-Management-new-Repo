@@ -2,11 +2,11 @@ import type { Task, Project, TeamMember } from "@cbsd/utils";
 import { generateId } from "@cbsd/utils";
 
 export const MOCK_MEMBERS: TeamMember[] = [
-  { id: "m1", name: "Alex Johnson", email: "alex@teamflow.io", role: "Engineering Lead" },
-  { id: "m2", name: "Sarah Chen", email: "sarah@teamflow.io", role: "Product Manager" },
-  { id: "m3", name: "Marcus Webb", email: "marcus@teamflow.io", role: "Designer" },
-  { id: "m4", name: "Priya Patel", email: "priya@teamflow.io", role: "Frontend Dev" },
-  { id: "m5", name: "Jordan Kim", email: "jordan@teamflow.io", role: "Backend Dev" },
+  { id: "m1", name: "Dawit Bekele", email: "dawit@teamflow.io", role: "Engineering Lead" },
+  { id: "m2", name: "Selam Tesfaye", email: "selam@teamflow.io", role: "Product Manager" },
+  { id: "m3", name: "Bereket Girma", email: "bereket@teamflow.io", role: "Designer" },
+  { id: "m4", name: "Tigist Haile", email: "tigist@teamflow.io", role: "Frontend Dev" },
+  { id: "m5", name: "Yohannes Alemu", email: "yohannes@teamflow.io", role: "Backend Dev" },
 ];
 
 export const MOCK_PROJECTS: Project[] = [

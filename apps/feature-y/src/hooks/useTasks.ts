@@ -10,12 +10,15 @@ import {
 import { MOCK_PERSONAL_TASKS, MOCK_HABITS } from "../data/mockData";
 
 export function usePersonalTasks() {
-  const [tasks, setTasks] = useState<Task[]>(() =>
-    loadFromStorage<Task[]>(PERSONALFOCUS_KEYS.TASKS, MOCK_PERSONAL_TASKS)
-  );
-  const [habits, setHabits] = useState<Habit[]>(() =>
-    loadFromStorage<Habit[]>(PERSONALFOCUS_KEYS.HABITS, MOCK_HABITS)
-  );
+  const [tasks, setTasks] = useState<Task[]>(MOCK_PERSONAL_TASKS);
+  const [habits, setHabits] = useState<Habit[]>(MOCK_HABITS);
+
+  useEffect(() => {
+    const savedTasks = loadFromStorage<Task[]>(PERSONALFOCUS_KEYS.TASKS, MOCK_PERSONAL_TASKS);
+    const savedHabits = loadFromStorage<Habit[]>(PERSONALFOCUS_KEYS.HABITS, MOCK_HABITS);
+    setTasks(savedTasks);
+    setHabits(savedHabits);
+  }, []);
 
   useEffect(() => { saveToStorage(PERSONALFOCUS_KEYS.TASKS, tasks); }, [tasks]);
   useEffect(() => { saveToStorage(PERSONALFOCUS_KEYS.HABITS, habits); }, [habits]);

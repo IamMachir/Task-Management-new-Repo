@@ -28,8 +28,13 @@ export default function PersonalFocusPage() {
 
   const { tasks, habits, addTask, updateTask, deleteTask, toggleTaskDone, toggleHabit, todayTasks, stats, completion, score } = usePersonalTasks();
 
-  const today = new Date().toISOString().split("T")[0];
-  const weekDates = getWeekDates();
+  const [today, setToday] = useState("");
+  const [weekDates, setWeekDates] = useState<Date[]>([]);
+
+  useEffect(() => {
+    setToday(new Date().toISOString().split("T")[0]);
+    setWeekDates(getWeekDates());
+  }, []);
 
   const filteredTasks = tasks.filter((t) => !search || t.title.toLowerCase().includes(search.toLowerCase()));
   const sortedTasks = sortTasks(filteredTasks, "priority");

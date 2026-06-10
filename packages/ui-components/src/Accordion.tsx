@@ -16,7 +16,7 @@ export interface AccordionProps {
 }
 
 export function Accordion({ items, allowMultiple = false, className }: AccordionProps) {
-  const defaultOpen = items.filter((i) => i.defaultOpen).map((i) => i.id);
+  const defaultOpen = (items || []).filter((i) => i.defaultOpen).map((i) => i.id);
   const [openIds, setOpenIds] = useState<string[]>(defaultOpen);
 
   function toggle(id: string) {
@@ -31,7 +31,7 @@ export function Accordion({ items, allowMultiple = false, className }: Accordion
 
   return (
     <div className={cn("divide-y divide-slate-100 rounded-xl border border-slate-200 overflow-hidden", className)}>
-      {items.map((item) => {
+      {(items || []).map((item) => {
         const isOpen = openIds.includes(item.id);
         return (
           <div key={item.id} className="bg-white">

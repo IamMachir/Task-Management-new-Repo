@@ -2,6 +2,7 @@
  * Save data to localStorage with error handling
  */
 export function saveToStorage<T>(key: string, data: T): void {
+  if (typeof window === "undefined") return;
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch {
@@ -13,6 +14,7 @@ export function saveToStorage<T>(key: string, data: T): void {
  * Load data from localStorage with a fallback default
  */
 export function loadFromStorage<T>(key: string, defaultValue: T): T {
+  if (typeof window === "undefined") return defaultValue;
   try {
     const raw = localStorage.getItem(key);
     if (raw === null) return defaultValue;
@@ -26,6 +28,7 @@ export function loadFromStorage<T>(key: string, defaultValue: T): T {
  * Remove a key from localStorage
  */
 export function removeFromStorage(key: string): void {
+  if (typeof window === "undefined") return;
   try {
     localStorage.removeItem(key);
   } catch {
@@ -37,6 +40,7 @@ export function removeFromStorage(key: string): void {
  * Clear all app-related keys from localStorage
  */
 export function clearStorage(prefix: string): void {
+  if (typeof window === "undefined") return;
   try {
     const keys = Object.keys(localStorage).filter((k) => k.startsWith(prefix));
     keys.forEach((k) => localStorage.removeItem(k));

@@ -9,14 +9,20 @@ import {
 import { MOCK_TASKS } from "../data/mockData";
 
 export function useTasks(projectId?: string) {
-  const [tasks, setTasks] = useState<Task[]>(() => {
-    const saved = loadFromStorage<Task[]>(TEAMFLOW_KEYS.TASKS, MOCK_TASKS);
-    return saved.length > 0 ? saved : MOCK_TASKS;
-  });
+  const [tasks, setTasks] = useState<Task[]>(MOCK_TASKS);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    saveToStorage(TEAMFLOW_KEYS.TASKS, tasks);
-  }, [tasks]);
+    const saved = loadFromStorage<Task[]>(TEAMFLOW_KEYS.TASKS, MOCK_TASKS);
+    setTasks(saved.length > 0 ? saved : MOCK_TASKS);
+    setHydrated(true);
+  }, []);
+
+  useEffect(() => {
+    if (hydrated) {
+      saveToStorage(TEAMFLOW_KEYS.TASKS, tasks);
+    }
+  }, [tasks, hydrated]);
 
   const filtered = projectId ? tasks.filter((t) => t.projectId === projectId) : tasks;
 

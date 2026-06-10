@@ -3,9 +3,10 @@ import React, { useState, useCallback } from "react";
 import {
   KanbanColumn, TaskModal, StatsCard, FilterBar,
   Sidebar, EmptyState, ConfirmationDialog, UserAvatar, Button,
-  Card, CardHeader, CardTitle, Badge, Alert, Tooltip, Switch, Skeleton
+  Card, CardHeader, CardTitle, Badge, Alert, Tooltip, Switch, Skeleton,
+  NotificationToast,
 } from "@cbsd/ui-components";
-import type { TaskFormData } from "@cbsd/ui-components";
+import type { TaskFormData, ToastVariant } from "@cbsd/ui-components";
 import type { Task, Status } from "@cbsd/utils";
 import {
   filterTasks, getStatusLabel, formatDate, calculateCompletionPercentage,
@@ -15,6 +16,13 @@ import { useTasks } from "../hooks/useTasks";
 import { MOCK_PROJECTS, MOCK_MEMBERS } from "../data/mockData";
 
 const KANBAN_STATUSES: Status[] = ["todo", "in-progress", "done"];
+
+interface ToastItem {
+  id: string;
+  message: string;
+  title?: string;
+  variant: ToastVariant;
+}
 
 export default function TeamFlowPage() {
   const [activeProject, setActiveProject] = useState<string>("all");
@@ -27,6 +35,7 @@ export default function TeamFlowPage() {
   const [view, setView] = useState<"kanban" | "stats">("kanban");
   const [isCompact, setIsCompact] = useState(false);
   const [showWelcomeAlert, setShowWelcomeAlert] = useState(true);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const projectId = activeProject === "all" ? undefined : activeProject;
   const { tasks, addTask, updateTask, deleteTask, moveTask, stats, grouped } = useTasks(projectId);
@@ -43,12 +52,23 @@ export default function TeamFlowPage() {
   const getMember = (id?: string) => MOCK_MEMBERS.find((m) => m.id === id);
   const getProject = (id?: string) => MOCK_PROJECTS.find((p) => p.id === id);
 
+  function showToast(message: string, variant: ToastVariant = "info", title?: string) {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((prev) => [...prev, { id, message, variant, title }]);
+  }
+
+  function dismissToast(id: string) {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }
+
   function handleSubmit(data: TaskFormData) {
     const tags = data.tags ? data.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
     if (editingTask) {
       updateTask(editingTask.id, { ...data, tags, status: data.status as Status });
+      showToast("Task updated successfully.", "success", "Task Updated");
     } else {
       addTask({ ...data, tags, status: data.status as Status });
+      showToast(`"${data.title}" added to ${getStatusLabel(data.status as Status)}.`, "success", "Task Created");
     }
     setEditingTask(null);
   }
@@ -71,7 +91,10 @@ export default function TeamFlowPage() {
 
   function handleDrop(e: React.DragEvent, status: Status) {
     const taskId = e.dataTransfer.getData("taskId");
-    if (taskId) moveTask(taskId, status);
+    if (taskId) {
+      moveTask(taskId, status);
+      showToast(`Task moved to ${getStatusLabel(status)}.`, "info");
+    }
     setDraggingId(null);
   }
 
@@ -322,9 +345,29 @@ export default function TeamFlowPage() {
         title="Delete Task"
         description="This action cannot be undone. The task will be permanently removed."
         confirmLabel="Delete"
-        onConfirm={() => { if (deleteTarget) deleteTask(deleteTarget); setDeleteTarget(null); }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteTask(deleteTarget);
+            showToast("Task deleted.", "error", "Deleted");
+          }
+          setDeleteTarget(null);
+        }}
         onCancel={() => setDeleteTarget(null)}
       />
+
+      {/* Toast container */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-80 pointer-events-none">
+        {toasts.map((toast) => (
+          <div key={toast.id} className="pointer-events-auto">
+            <NotificationToast
+              message={toast.message}
+              title={toast.title}
+              variant={toast.variant}
+              onDismiss={() => dismissToast(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import { cn } from "./utils";
 import { PriorityBadge } from "./PriorityBadge";
 import { StatusBadge } from "./StatusBadge";
 import { UserAvatar } from "./UserAvatar";
+import { TaskTag, getTagColor } from "./TaskTag";
 import type { Priority, Status } from "./PriorityBadge";
 
 export interface TaskCardProps {
@@ -103,9 +104,7 @@ export function TaskCard({
       {tags && tags.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1">
           {tags.map((tag) => (
-            <span key={tag} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-xs rounded">
-              {tag}
-            </span>
+            <TaskTag key={tag} label={tag} color={getTagColor(tag)} />
           ))}
         </div>
       )}

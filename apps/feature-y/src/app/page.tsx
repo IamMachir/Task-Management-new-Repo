@@ -3,9 +3,10 @@ import React, { useState, useEffect } from "react";
 import {
   StatsCard, TaskCard, TaskModal, FilterBar,
   ProgressBar, ProgressCircle, Button, EmptyState, ConfirmationDialog,
-  Checkbox, Card, CardHeader, CardTitle, CardContent, Badge, Alert, Accordion, Tooltip, Skeleton, Switch, Modal, cn
+  Checkbox, Card, CardHeader, CardTitle, CardContent, Badge, Alert, Accordion, Tooltip, Skeleton, Switch, Modal, cn,
+  NotificationToast,
 } from "@cbsd/ui-components";
-import type { TaskFormData } from "@cbsd/ui-components";
+import type { TaskFormData, ToastVariant } from "@cbsd/ui-components";
 import type { Task, Status } from "@cbsd/utils";
 import {
   formatDate, isToday, getWeekDates, sortTasks, getPriorityConfig,
@@ -13,6 +14,13 @@ import {
 import { usePersonalTasks } from "../hooks/useTasks";
 
 type Tab = "today" | "tasks" | "habits" | "stats";
+
+interface ToastItem {
+  id: string;
+  message: string;
+  title?: string;
+  variant: ToastVariant;
+}
 
 export default function PersonalFocusPage() {
   const [tab, setTab] = useState<Tab>("today");
@@ -24,7 +32,8 @@ export default function PersonalFocusPage() {
   const [pomodoroTime, setPomodoroTime] = useState(25 * 60);
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [showHabits, setShowHabits] = useState(true);
-  const [isLoadingStats, setIsLoadingStats] = useState(false); // For demoing skeleton
+  const [isLoadingStats, setIsLoadingStats] = useState(false);
+  const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const { tasks, habits, addTask, updateTask, deleteTask, toggleTaskDone, toggleHabit, todayTasks, stats, completion, score } = usePersonalTasks();
 
@@ -39,14 +48,34 @@ export default function PersonalFocusPage() {
   const filteredTasks = tasks.filter((t) => !search || t.title.toLowerCase().includes(search.toLowerCase()));
   const sortedTasks = sortTasks(filteredTasks, "priority");
 
+  function showToast(message: string, variant: ToastVariant = "info", title?: string) {
+    const id = Math.random().toString(36).slice(2);
+    setToasts((prev) => [...prev, { id, message, variant, title }]);
+  }
+
+  function dismissToast(id: string) {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }
+
   function handleSubmit(data: TaskFormData) {
     const tags = data.tags ? data.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
     if (editingTask) {
       updateTask(editingTask.id, { ...data, tags, status: data.status as Status });
+      showToast("Task updated successfully.", "success", "Task Updated");
     } else {
       addTask({ ...data, tags, status: data.status as Status });
+      showToast(`"${data.title}" has been added.`, "success", "Task Created");
     }
     setEditingTask(null);
+  }
+
+  function handleToggleDone(task: Task) {
+    toggleTaskDone(task.id);
+    const nowDone = task.status !== "done";
+    showToast(
+      nowDone ? `"${task.title}" marked as done!` : `"${task.title}" reopened.`,
+      nowDone ? "success" : "info",
+    );
   }
 
   function formatPomodoro(secs: number) {
@@ -199,7 +228,7 @@ export default function PersonalFocusPage() {
                     <TaskCard
                       key={task.id}
                       {...task}
-                      onClick={() => toggleTaskDone(task.id)}
+                      onClick={() => handleToggleDone(task)}
                       onEdit={() => { setEditingTask(task); setModalOpen(true); }}
                       onDelete={() => setDeleteTarget(task.id)}
                     />
@@ -225,7 +254,7 @@ export default function PersonalFocusPage() {
                   <TaskCard
                     key={task.id}
                     {...task}
-                    onClick={() => toggleTaskDone(task.id)}
+                    onClick={() => handleToggleDone(task)}
                     onEdit={() => { setEditingTask(task); setModalOpen(true); }}
                     onDelete={() => setDeleteTarget(task.id)}
                   />
@@ -378,7 +407,13 @@ export default function PersonalFocusPage() {
         title="Delete Task"
         description="This will permanently remove the task."
         confirmLabel="Delete"
-        onConfirm={() => { if (deleteTarget) deleteTask(deleteTarget); setDeleteTarget(null); }}
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteTask(deleteTarget);
+            showToast("Task deleted.", "error", "Deleted");
+          }
+          setDeleteTarget(null);
+        }}
         onCancel={() => setDeleteTarget(null)}
       />
 
@@ -417,6 +452,20 @@ export default function PersonalFocusPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Toast container */}
+      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-80 pointer-events-none">
+        {toasts.map((toast) => (
+          <div key={toast.id} className="pointer-events-auto">
+            <NotificationToast
+              message={toast.message}
+              title={toast.title}
+              variant={toast.variant}
+              onDismiss={() => dismissToast(toast.id)}
+            />
+          </div>
+        ))}
+      </div>
     </div>
   );
 }

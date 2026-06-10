@@ -1,7 +1,8 @@
-import * as React from "react"
-import { cn } from "@/lib/utils"
+"use client";
+import * as React from "react";
+import { cn } from "./utils";
 
-const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = {
+export const TAG_COLOR_MAP = {
   red:    { bg: "bg-red-100",    text: "text-red-700",    border: "border-red-200" },
   orange: { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-200" },
   yellow: { bg: "bg-yellow-100", text: "text-yellow-700", border: "border-yellow-200" },
@@ -10,16 +11,27 @@ const COLOR_MAP: Record<string, { bg: string; text: string; border: string }> = 
   purple: { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-200" },
   pink:   { bg: "bg-pink-100",   text: "text-pink-700",   border: "border-pink-200" },
   gray:   { bg: "bg-gray-100",   text: "text-gray-600",   border: "border-gray-200" },
+} as const;
+
+export type TagColor = keyof typeof TAG_COLOR_MAP;
+
+const TAG_COLORS = Object.keys(TAG_COLOR_MAP) as TagColor[];
+
+/** Deterministic color from a tag label so the same tag always gets the same color. */
+export function getTagColor(label: string): TagColor {
+  const hash = label.split("").reduce((a, c) => a + c.charCodeAt(0), 0);
+  return TAG_COLORS[hash % TAG_COLORS.length];
 }
 
 export interface TaskTagProps extends React.HTMLAttributes<HTMLSpanElement> {
-  label: string
-  color?: keyof typeof COLOR_MAP
-  onRemove?: () => void
+  label: string;
+  color?: TagColor;
+  onRemove?: () => void;
 }
 
-function TaskTag({ label, color = "gray", onRemove, className, ...props }: TaskTagProps) {
-  const colors = COLOR_MAP[color] ?? COLOR_MAP.gray
+export function TaskTag({ label, color, onRemove, className, ...props }: TaskTagProps) {
+  const resolved = color ?? getTagColor(label);
+  const colors = TAG_COLOR_MAP[resolved] ?? TAG_COLOR_MAP.gray;
 
   return (
     <span
@@ -37,21 +49,17 @@ function TaskTag({ label, color = "gray", onRemove, className, ...props }: TaskT
         <button
           type="button"
           onClick={(e) => {
-            e.stopPropagation()
-            onRemove()
+            e.stopPropagation();
+            onRemove();
           }}
-          className={cn(
-            "ml-0.5 rounded-full p-0.5 transition-colors hover:bg-black/10 focus:outline-none",
-          )}
+          className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-black/10 focus:outline-none"
           aria-label={`Remove tag ${label}`}
         >
-          <svg width="8" height="8" viewBox="0 0 8 8" fill="currentColor">
+          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
             <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
           </svg>
         </button>
       )}
     </span>
-  )
+  );
 }
-
-export { TaskTag, COLOR_MAP }

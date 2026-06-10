@@ -77,4 +77,10 @@ export type { AccordionProps, AccordionItem } from "./Accordion";
 export { Modal } from "./Modal";
 export type { ModalProps, ModalSize } from "./Modal";
 
+export { NotificationToast } from "./NotificationToast";
+export type { NotificationToastProps, ToastVariant } from "./NotificationToast";
+
+export { TaskTag, getTagColor, TAG_COLOR_MAP } from "./TaskTag";
+export type { TaskTagProps, TagColor } from "./TaskTag";
+
 export { cn } from "./utils";

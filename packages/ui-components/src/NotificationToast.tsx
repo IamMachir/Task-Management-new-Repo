@@ -1,16 +1,17 @@
-import * as React from "react"
-import { useState, useEffect } from "react"
-import { cn } from "@/lib/utils"
+"use client";
+import * as React from "react";
+import { useState, useEffect } from "react";
+import { cn } from "./utils";
 
-export type ToastVariant = "success" | "info" | "warning" | "error"
+export type ToastVariant = "success" | "info" | "warning" | "error";
 
 export interface NotificationToastProps {
-  message: string
-  title?: string
-  variant?: ToastVariant
-  duration?: number
-  onDismiss?: () => void
-  className?: string
+  message: string;
+  title?: string;
+  variant?: ToastVariant;
+  duration?: number;
+  onDismiss?: () => void;
+  className?: string;
 }
 
 const VARIANT_STYLES: Record<ToastVariant, { container: string; icon: React.ReactNode }> = {
@@ -50,9 +51,9 @@ const VARIANT_STYLES: Record<ToastVariant, { container: string; icon: React.Reac
       </svg>
     ),
   },
-}
+};
 
-function NotificationToast({
+export function NotificationToast({
   message,
   title,
   variant = "info",
@@ -60,31 +61,31 @@ function NotificationToast({
   onDismiss,
   className,
 }: NotificationToastProps) {
-  const [isVisible, setIsVisible] = useState(false)
-  const [isLeaving, setIsLeaving] = useState(false)
+  const [isVisible, setIsVisible] = useState(false);
+  const [isLeaving, setIsLeaving] = useState(false);
 
   useEffect(() => {
-    const showTimer = setTimeout(() => setIsVisible(true), 10)
-    return () => clearTimeout(showTimer)
-  }, [])
+    const showTimer = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(showTimer);
+  }, []);
 
   useEffect(() => {
-    if (duration <= 0) return
-    const hideTimer = setTimeout(() => dismiss(), duration)
-    return () => clearTimeout(hideTimer)
-  }, [duration])
+    if (duration <= 0) return;
+    const hideTimer = setTimeout(() => dismiss(), duration);
+    return () => clearTimeout(hideTimer);
+  }, [duration]);
 
   function dismiss() {
-    setIsLeaving(true)
+    setIsLeaving(true);
     setTimeout(() => {
-      setIsVisible(false)
-      onDismiss?.()
-    }, 300)
+      setIsVisible(false);
+      onDismiss?.();
+    }, 300);
   }
 
-  if (!isVisible && !isLeaving) return null
+  if (!isVisible && !isLeaving) return null;
 
-  const styles = VARIANT_STYLES[variant]
+  const styles = VARIANT_STYLES[variant];
 
   return (
     <div
@@ -115,7 +116,5 @@ function NotificationToast({
         </svg>
       </button>
     </div>
-  )
+  );
 }
-
-export { NotificationToast }

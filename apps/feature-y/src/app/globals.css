@@ -1,6 +1,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 @import "tailwindcss";
 
+@source "../../packages/ui-components/src";
+@source "../../packages/utils/src";
+
+@theme {
+  --color-brand-50: #fdf4ff;
+  --color-brand-500: #a855f7;
+  --color-brand-600: #9333ea;
+  --color-brand-700: #7e22ce;
+  --font-family-sans: Inter, system-ui, sans-serif;
+}
+
 :root {
   --background: #faf5ff;
   --foreground: #1e1b4b;

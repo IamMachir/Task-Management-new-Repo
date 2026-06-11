@@ -10,7 +10,6 @@
     "dev": {
       "cache": false,
       "persistent": true,
-      "interactivity": true,
       "outputLogs": "new-only"
     },
     "lint": {

@@ -14,40 +14,51 @@ export interface NotificationToastProps {
   className?: string;
 }
 
-const VARIANT_STYLES: Record<ToastVariant, { container: string; icon: React.ReactNode }> = {
+const VARIANT_CONFIG: Record<
+  ToastVariant,
+  { bar: string; iconBg: string; titleColor: string; icon: React.ReactNode }
+> = {
   success: {
-    container: "bg-green-50 border-green-200 text-green-800",
+    bar: "bg-emerald-500",
+    iconBg: "bg-emerald-100",
+    titleColor: "text-emerald-700",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-green-500 shrink-0">
-        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M5 8l2 2 4-4" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="text-emerald-600">
+        <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" />
+        <path d="M6 10l3 3 5-5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" />
       </svg>
     ),
   },
   info: {
-    container: "bg-blue-50 border-blue-200 text-blue-800",
+    bar: "bg-blue-500",
+    iconBg: "bg-blue-100",
+    titleColor: "text-blue-700",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-blue-500 shrink-0">
-        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M8 7v4M8 5.5v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="text-blue-600">
+        <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" />
+        <path d="M10 9v5M10 6.5v.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       </svg>
     ),
   },
   warning: {
-    container: "bg-yellow-50 border-yellow-200 text-yellow-800",
+    bar: "bg-amber-500",
+    iconBg: "bg-amber-100",
+    titleColor: "text-amber-700",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-yellow-500 shrink-0">
-        <path d="M8 2L14 13H2L8 2z" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" />
-        <path d="M8 6v3M8 11v.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="text-amber-600">
+        <path d="M10 3L18 17H2L10 3z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
+        <path d="M10 8v4M10 14v.5" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       </svg>
     ),
   },
   error: {
-    container: "bg-red-50 border-red-200 text-red-800",
+    bar: "bg-red-500",
+    iconBg: "bg-red-100",
+    titleColor: "text-red-700",
     icon: (
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" className="text-red-500 shrink-0">
-        <circle cx="8" cy="8" r="7" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M5.5 5.5l5 5M10.5 5.5l-5 5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+      <svg width="18" height="18" viewBox="0 0 20 20" fill="none" className="text-red-600">
+        <circle cx="10" cy="10" r="9" stroke="currentColor" strokeWidth="2" />
+        <path d="M7 7l6 6M13 7l-6 6" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" />
       </svg>
     ),
   },
@@ -63,58 +74,84 @@ export function NotificationToast({
 }: NotificationToastProps) {
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
+  const [progress, setProgress] = useState(100);
 
   useEffect(() => {
-    const showTimer = setTimeout(() => setIsVisible(true), 10);
-    return () => clearTimeout(showTimer);
+    const t = setTimeout(() => setIsVisible(true), 10);
+    return () => clearTimeout(t);
   }, []);
 
   useEffect(() => {
     if (duration <= 0) return;
-    const hideTimer = setTimeout(() => dismiss(), duration);
-    return () => clearTimeout(hideTimer);
+    const start = Date.now();
+    const tick = setInterval(() => {
+      const elapsed = Date.now() - start;
+      setProgress(Math.max(0, 100 - (elapsed / duration) * 100));
+    }, 50);
+    const hide = setTimeout(() => dismiss(), duration);
+    return () => { clearTimeout(hide); clearInterval(tick); };
   }, [duration]);
 
   function dismiss() {
     setIsLeaving(true);
-    setTimeout(() => {
-      setIsVisible(false);
-      onDismiss?.();
-    }, 300);
+    setTimeout(() => { setIsVisible(false); onDismiss?.(); }, 350);
   }
 
   if (!isVisible && !isLeaving) return null;
 
-  const styles = VARIANT_STYLES[variant];
+  const cfg = VARIANT_CONFIG[variant];
 
   return (
     <div
       role="alert"
       aria-live="polite"
       className={cn(
-        "flex items-start gap-3 rounded-lg border px-4 py-3 shadow-md text-sm transition-all duration-300",
-        styles.container,
+        "relative flex items-start gap-3 bg-white rounded-xl border border-slate-200 pl-4 pr-3 pt-3.5 pb-4",
+        "shadow-[0_8px_30px_rgb(0,0,0,0.12)] ring-1 ring-black/5",
+        "overflow-hidden transition-all duration-350 ease-out",
         isLeaving
-          ? "opacity-0 translate-y-2 scale-95"
-          : "opacity-100 translate-y-0 scale-100",
+          ? "opacity-0 translate-x-4 scale-95"
+          : "opacity-100 translate-x-0 scale-100",
         className,
       )}
     >
-      {styles.icon}
-      <div className="flex-1 min-w-0">
-        {title && <p className="font-semibold leading-none mb-1">{title}</p>}
-        <p className="leading-snug">{message}</p>
+      {/* Left accent bar */}
+      <div className={cn("absolute left-0 top-0 bottom-0 w-1 rounded-l-xl", cfg.bar)} />
+
+      {/* Icon */}
+      <div className={cn("shrink-0 w-8 h-8 rounded-lg flex items-center justify-center mt-0.5", cfg.iconBg)}>
+        {cfg.icon}
       </div>
+
+      {/* Body */}
+      <div className="flex-1 min-w-0">
+        {title && (
+          <p className={cn("text-sm font-bold leading-tight mb-0.5", cfg.titleColor)}>{title}</p>
+        )}
+        <p className="text-sm text-slate-600 leading-snug">{message}</p>
+      </div>
+
+      {/* Dismiss button */}
       <button
         type="button"
         onClick={dismiss}
-        className="shrink-0 rounded p-0.5 opacity-60 hover:opacity-100 transition-opacity focus:outline-none"
+        className="shrink-0 mt-0.5 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none"
         aria-label="Dismiss notification"
       >
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <path d="M1 1l12 12M13 1L1 13" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none">
+          <path d="M1 1l10 10M11 1L1 11" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
         </svg>
       </button>
+
+      {/* Progress bar */}
+      {duration > 0 && (
+        <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-slate-100 rounded-b-xl overflow-hidden">
+          <div
+            className={cn("h-full rounded-b-xl transition-none", cfg.bar, "opacity-60")}
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
     </div>
   );
 }

@@ -3,14 +3,14 @@ import * as React from "react";
 import { cn } from "./utils";
 
 export const TAG_COLOR_MAP = {
-  red:    { bg: "bg-red-100",    text: "text-red-700",    border: "border-red-200" },
-  orange: { bg: "bg-orange-100", text: "text-orange-700", border: "border-orange-200" },
-  yellow: { bg: "bg-yellow-100", text: "text-yellow-700", border: "border-yellow-200" },
-  green:  { bg: "bg-green-100",  text: "text-green-700",  border: "border-green-200" },
-  blue:   { bg: "bg-blue-100",   text: "text-blue-700",   border: "border-blue-200" },
-  purple: { bg: "bg-purple-100", text: "text-purple-700", border: "border-purple-200" },
-  pink:   { bg: "bg-pink-100",   text: "text-pink-700",   border: "border-pink-200" },
-  gray:   { bg: "bg-gray-100",   text: "text-gray-600",   border: "border-gray-200" },
+  red:    { bg: "bg-red-500",    text: "text-white",        dot: "bg-red-200",    hover: "hover:bg-red-600" },
+  orange: { bg: "bg-orange-500", text: "text-white",        dot: "bg-orange-200", hover: "hover:bg-orange-600" },
+  yellow: { bg: "bg-yellow-400", text: "text-yellow-950",   dot: "bg-yellow-200", hover: "hover:bg-yellow-500" },
+  green:  { bg: "bg-emerald-500",text: "text-white",        dot: "bg-emerald-200",hover: "hover:bg-emerald-600" },
+  blue:   { bg: "bg-blue-500",   text: "text-white",        dot: "bg-blue-200",   hover: "hover:bg-blue-600" },
+  purple: { bg: "bg-violet-600", text: "text-white",        dot: "bg-violet-200", hover: "hover:bg-violet-700" },
+  pink:   { bg: "bg-pink-500",   text: "text-white",        dot: "bg-pink-200",   hover: "hover:bg-pink-600" },
+  gray:   { bg: "bg-slate-500",  text: "text-white",        dot: "bg-slate-300",  hover: "hover:bg-slate-600" },
 } as const;
 
 export type TagColor = keyof typeof TAG_COLOR_MAP;
@@ -36,14 +36,17 @@ export function TaskTag({ label, color, onRemove, className, ...props }: TaskTag
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 rounded-full border px-2.5 py-0.5 text-xs font-medium transition-all",
+        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold",
+        "shadow-sm select-none transition-colors",
         colors.bg,
         colors.text,
-        colors.border,
+        onRemove && colors.hover,
         className,
       )}
       {...props}
     >
+      {/* Dot indicator */}
+      <span className={cn("w-1.5 h-1.5 rounded-full shrink-0", colors.dot)} />
       {label || "General"}
       {onRemove && (
         <button
@@ -52,11 +55,11 @@ export function TaskTag({ label, color, onRemove, className, ...props }: TaskTag
             e.stopPropagation();
             onRemove();
           }}
-          className="ml-0.5 rounded-full p-0.5 transition-colors hover:bg-black/10 focus:outline-none"
+          className="ml-0.5 rounded-full w-3.5 h-3.5 flex items-center justify-center transition-colors hover:bg-white/20 focus:outline-none"
           aria-label={`Remove tag ${label}`}
         >
-          <svg width="8" height="8" viewBox="0 0 8 8" fill="none">
-            <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          <svg width="7" height="7" viewBox="0 0 8 8" fill="none">
+            <path d="M1 1l6 6M7 1L1 7" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
           </svg>
         </button>
       )}

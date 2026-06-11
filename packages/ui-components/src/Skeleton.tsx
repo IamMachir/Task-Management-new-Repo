@@ -4,25 +4,10 @@ import { cn } from "./utils";
 
 export interface SkeletonProps {
   className?: string;
-  rounded?: "sm" | "md" | "lg" | "full";
 }
 
-export function Skeleton({ className, rounded = "md" }: SkeletonProps) {
-  const roundedMap = {
-    sm:   "rounded",
-    md:   "rounded-md",
-    lg:   "rounded-xl",
-    full: "rounded-full",
-  };
-
-  return (
-    <div
-      aria-hidden="true"
-      className={cn(
-        "animate-pulse bg-slate-200",
-        roundedMap[rounded],
-        className
-      )}
-    />
-  );
+export function Skeleton({ className = "h-4 w-full rounded bg-slate-200 animate-pulse" }: SkeletonProps) {
+  return <div className={cn(className)} aria-hidden />;
 }
+
+export default Skeleton;

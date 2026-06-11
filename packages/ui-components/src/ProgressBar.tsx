@@ -1,6 +1,7 @@
 "use client";
-import React from "react";
+
 import { cn } from "./utils";
+import type { ReactNode } from "react";
 
 export interface ProgressBarProps {
   value: number;
@@ -8,7 +9,7 @@ export interface ProgressBarProps {
   label?: string;
   showValue?: boolean;
   size?: "sm" | "md" | "lg";
-  color?: "indigo" | "emerald" | "blue" | "amber" | "red";
+  color?: "indigo" | "emerald" | "blue" | "amber" | "red" | "violet";
   className?: string;
 }
 
@@ -18,6 +19,7 @@ const COLOR_MAP = {
   blue: "bg-blue-500",
   amber: "bg-amber-400",
   red: "bg-red-500",
+  violet: "bg-violet-500",
 };
 
 const SIZE_MAP = { sm: "h-1.5", md: "h-2.5", lg: "h-4" };
@@ -44,6 +46,7 @@ export function ProgressBar({
         <div
           className={cn("h-full rounded-full transition-all duration-500 ease-out", COLOR_MAP[color])}
           style={{ width: `${pct}%` }}
+          suppressHydrationWarning
         />
       </div>
     </div>
@@ -56,7 +59,7 @@ export interface ProgressCircleProps {
   size?: number;
   strokeWidth?: number;
   color?: string;
-  label?: React.ReactNode;
+  label?: ReactNode;
   className?: string;
 }
 
@@ -83,10 +86,11 @@ export function ProgressCircle({
           strokeDasharray={circ} strokeDashoffset={offset}
           strokeLinecap="round"
           style={{ transition: "stroke-dashoffset 0.5s ease" }}
+          suppressHydrationWarning
         />
       </svg>
       {label && (
-        <div className="absolute inset-0 flex items-center justify-center">
+        <div className="absolute inset-0 flex items-center justify-center" suppressHydrationWarning>
           {label}
         </div>
       )}

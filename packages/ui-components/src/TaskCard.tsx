@@ -1,11 +1,12 @@
 "use client";
-import React from "react";
+
 import { cn } from "./utils";
 import { PriorityBadge } from "./PriorityBadge";
 import { StatusBadge } from "./StatusBadge";
 import { UserAvatar } from "./UserAvatar";
-import { TaskTag, getTagColor } from "./TaskTag";
-import type { Priority, Status } from "./PriorityBadge";
+import type { Priority } from "./PriorityBadge";
+import type { Status } from "./StatusBadge";
+import type { KeyboardEvent } from "react";
 
 export interface TaskCardProps {
   id: string;
@@ -44,6 +45,13 @@ export function TaskCard({
     ? new Date(dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" })
     : null;
 
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick();
+    }
+  };
+
   return (
     <div
       className={cn(
@@ -54,6 +62,10 @@ export function TaskCard({
         className
       )}
       onClick={onClick}
+      onKeyDown={handleKeyDown}
+      tabIndex={onClick ? 0 : -1}
+      role="button"
+      aria-label={onClick ? `View task ${title}` : undefined}
     >
       <div className="flex items-start justify-between gap-2">
         <h3 className={cn("text-sm font-semibold text-slate-800 leading-snug flex-1", status === "done" && "line-through text-slate-400")}>
@@ -62,6 +74,7 @@ export function TaskCard({
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {onEdit && (
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); onEdit(); }}
               className="p-1 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-700"
               title="Edit"
@@ -73,6 +86,7 @@ export function TaskCard({
           )}
           {onDelete && (
             <button
+              type="button"
               onClick={(e) => { e.stopPropagation(); onDelete(); }}
               className="p-1 rounded hover:bg-red-50 text-slate-400 hover:text-red-500"
               title="Delete"
@@ -104,7 +118,9 @@ export function TaskCard({
       {tags && tags.length > 0 && (
         <div className="mt-2.5 flex flex-wrap gap-1">
           {tags.map((tag) => (
-            <TaskTag key={tag} label={tag} color={getTagColor(tag)} />
+            <span key={tag} className="px-1.5 py-0.5 bg-slate-100 text-slate-500 text-xs rounded">
+              {tag}
+            </span>
           ))}
         </div>
       )}

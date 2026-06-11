@@ -51,10 +51,13 @@ export function Sidebar({ sections, activeId, onSelect, header, footer, classNam
                     {item.icon && <span className="w-4 h-4 flex-shrink-0">{item.icon}</span>}
                     <span className="flex-1 text-left">{item.label}</span>
                     {item.badge !== undefined && (
-                      <span className={cn("px-1.5 py-0.5 rounded-full text-xs font-bold", activeId === item.id ? "bg-indigo-500" : "bg-slate-700 text-slate-300")}>
-                        {item.badge}
-                      </span>
-                    )}
+                    <span 
+                      suppressHydrationWarning
+                      className={cn("px-1.5 py-0.5 rounded-full text-[10px] font-black tracking-tighter", activeId === item.id ? "bg-indigo-500 text-white" : "bg-slate-800 text-slate-400")}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
                   </button>
                 </li>
               ))}

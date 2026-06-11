@@ -5,32 +5,39 @@ import type { TaskCardProps } from "./TaskCard";
 import { TaskCard } from "./TaskCard";
 import { EmptyState } from "./EmptyState";
 
-export type Status = "todo" | "in-progress" | "done";
+import type { Status } from "./StatusBadge";
 
 const COLUMN_STYLES: Record<Status, { header: string; dot: string; label: string }> = {
   todo: { header: "border-slate-200", dot: "bg-slate-400", label: "To Do" },
   "in-progress": { header: "border-blue-200", dot: "bg-blue-500", label: "In Progress" },
   done: { header: "border-emerald-200", dot: "bg-emerald-500", label: "Done" },
+  cancelled: { header: "border-rose-200", dot: "bg-rose-500", label: "Cancelled" },
 };
 
 export interface KanbanColumnProps {
   status: Status;
+  title?: string;
   tasks: TaskCardProps[];
   onAddTask?: () => void;
-  onDragOver?: (e: React.DragEvent) => void;
-  onDrop?: (e: React.DragEvent) => void;
+  onDragOver?: (e: React.DragEvent, status: Status) => void;
+  onDrop?: (e: React.DragEvent, status: Status) => void;
   onDragStart?: (e: React.DragEvent, taskId: string) => void;
+  onEditTask?: (taskId: string) => void;
+  onDeleteTask?: (taskId: string) => void;
   draggingId?: string | null;
   className?: string;
 }
 
 export function KanbanColumn({
   status,
+  title,
   tasks,
   onAddTask,
   onDragOver,
   onDrop,
   onDragStart,
+  onEditTask,
+  onDeleteTask,
   draggingId,
   className,
 }: KanbanColumnProps) {
@@ -43,13 +50,13 @@ export function KanbanColumn({
         header,
         className
       )}
-      onDragOver={(e) => { e.preventDefault(); onDragOver?.(e); }}
-      onDrop={onDrop}
+      onDragOver={(e) => { e.preventDefault(); onDragOver?.(e, status); }}
+      onDrop={(e) => onDrop?.(e, status)}
     >
       <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200">
         <div className="flex items-center gap-2">
           <span className={cn("w-2.5 h-2.5 rounded-full", dot)} />
-          <h3 className="text-sm font-bold text-slate-700">{label}</h3>
+          <h3 className="text-sm font-bold text-slate-700">{title ?? label}</h3>
           <span className="px-2 py-0.5 bg-white border border-slate-200 text-slate-500 text-xs font-semibold rounded-full">
             {tasks.length}
           </span>
@@ -82,7 +89,12 @@ export function KanbanColumn({
               onDragStart={(e) => onDragStart?.(e, task.id)}
               className="cursor-grab active:cursor-grabbing"
             >
-              <TaskCard {...task} isDragging={draggingId === task.id} />
+              <TaskCard
+                {...task}
+                isDragging={draggingId === task.id}
+                onEdit={onEditTask ? () => onEditTask(task.id) : undefined}
+                onDelete={onDeleteTask ? () => onDeleteTask(task.id) : undefined}
+              />
             </div>
           ))
         )}

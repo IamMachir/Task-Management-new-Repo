@@ -11,7 +11,7 @@ export interface SearchInputProps {
 }
 
 export function SearchInput({ value, onChange, placeholder = "Search...", className, debounceMs }: SearchInputProps) {
-  const timerRef = useRef<ReturnType<typeof setTimeout>>();
+  const timerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   const handleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -44,6 +44,8 @@ export function SearchInput({ value, onChange, placeholder = "Search...", classN
       />
       {value && (
         <button
+          type="button"
+          aria-label="Clear search"
           onClick={() => onChange("")}
           className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
         >

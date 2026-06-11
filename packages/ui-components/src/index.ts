@@ -1,4 +1,3 @@
-
 export { Button } from "./Button";
 export type { ButtonProps } from "./Button";
 
@@ -17,6 +16,29 @@ export type { PriorityBadgeProps } from "./PriorityBadge";
 export { StatusBadge } from "./StatusBadge";
 export type { StatusBadgeProps } from "./StatusBadge";
 
+export { Alert } from "./Alert";
+export { Badge } from "./Badge";
+export type { BadgeProps } from "./Badge";
+export { Tooltip } from "./Tooltip";
+export type { TooltipProps } from "./Tooltip";
+export { Accordion } from "./Accordion";
+export { Checkbox } from "./Checkbox";
+export type { CheckboxProps } from "./Checkbox";
+
+export {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from "./Card";
+export type { CardProps } from "./Card";
+
+export { Skeleton } from "./Skeleton";
+export { Switch } from "./Switch";
+export type { SwitchProps } from "./Switch";
+
 export { UserAvatar, AvatarGroup } from "./UserAvatar";
 export type { UserAvatarProps, AvatarGroupProps } from "./UserAvatar";
 
@@ -25,6 +47,12 @@ export type { ProgressBarProps, ProgressCircleProps } from "./ProgressBar";
 
 export { StatsCard } from "./StatsCard";
 export type { StatsCardProps } from "./StatsCard";
+
+export { Report } from "./Report";
+export type { ReportItem, ReportProps } from "./Report";
+
+export { Chat } from "./Chat";
+export type { ChatMessage, ChatProps, ChatAuthor } from "./Chat";
 
 export { TaskCard } from "./TaskCard";
 export type { TaskCardProps } from "./TaskCard";
@@ -47,40 +75,69 @@ export type { EmptyStateProps } from "./EmptyState";
 export { ConfirmationDialog } from "./ConfirmationDialog";
 export type { ConfirmationDialogProps } from "./ConfirmationDialog";
 
+export { Modal } from "./Modal";
+export type { ModalProps } from "./Modal";
+
 export { Sidebar } from "./Sidebar";
 export type { SidebarProps, SidebarItem, SidebarSection } from "./Sidebar";
 
-export { Badge } from "./Badge";
-export type { BadgeProps, BadgeVariant, BadgeSize } from "./Badge";
+export { Label } from "./Label";
+export type { LabelProps } from "./Label";
 
-export { Card, CardHeader, CardTitle, CardContent } from "./Card";
-export type { CardProps, CardHeaderProps, CardTitleProps, CardContentProps } from "./Card";
+export { Separator } from "./Separator";
+export type { SeparatorProps } from "./Separator";
 
-export { Alert } from "./Alert";
-export type { AlertProps, AlertVariant } from "./Alert";
+export { SkeletonLoader, SkeletonGroup } from "./SkeletonLoader";
+export type { SkeletonLoaderProps } from "./SkeletonLoader";
 
-export { Tooltip } from "./Tooltip";
-export type { TooltipProps, TooltipPosition } from "./Tooltip";
+export { Pagination } from "./Pagination";
+export type { PaginationProps } from "./Pagination";
 
-export { Switch } from "./Switch";
-export type { SwitchProps } from "./Switch";
+export { Container } from "./Container";
+export type { ContainerProps } from "./Container";
 
-export { Skeleton } from "./Skeleton";
-export type { SkeletonProps } from "./Skeleton";
+export { TaskList } from "./TaskList";
+export type { TaskListProps } from "./TaskList";
 
-export { Checkbox } from "./Checkbox";
-export type { CheckboxProps } from "./Checkbox";
+export { PageLayout } from "./PageLayout";
+export type { PageLayoutProps } from "./PageLayout";
 
-export { Accordion } from "./Accordion";
-export type { AccordionProps, AccordionItem } from "./Accordion";
+export { KanbanBoard } from "./KanbanBoard";
+export type { KanbanBoardProps, KanbanBoardColumn } from "./KanbanBoard";
 
-export { Modal } from "./Modal";
-export type { ModalProps, ModalSize } from "./Modal";
+export {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+} from "./Table";
+export type { TableProps } from "./Table";
 
-export { NotificationToast } from "./NotificationToast";
-export type { NotificationToastProps, ToastVariant } from "./NotificationToast";
+export { Tabs } from "./Tabs";
+export type { TabsProps } from "./Tabs";
 
-export { TaskTag, getTagColor, TAG_COLOR_MAP } from "./TaskTag";
-export type { TaskTagProps, TagColor } from "./TaskTag";
+export { ActivityHub } from "./ActivityHub";
+export type { ActivityHubProps } from "./ActivityHub";
+
+export { AnalyticsCard } from "./AnalyticsCard";
+export type { AnalyticsCardProps } from "./AnalyticsCard";
+
+export { RecentTasksWidget } from "./RecentTasksWidget";
+export type { RecentTasksWidgetProps } from "./RecentTasksWidget";
+
+export { TaskAssignmentCard } from "./TaskAssignmentCard";
+export type { TaskAssignmentCardProps } from "./TaskAssignmentCard";
+
+export {
+  TaskCommentSection,
+} from "./TaskCommentSection";
+export type {
+  TaskCommentSectionProps,
+  Comment as TaskComment,
+} from "./TaskCommentSection";
+
+export { NotificationPanel } from "./NotificationPanel";
 
 export { cn } from "./utils";

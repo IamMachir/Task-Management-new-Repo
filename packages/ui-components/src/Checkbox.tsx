@@ -1,60 +1,58 @@
 "use client";
-import React, { useId } from "react";
+import React from "react";
 import { cn } from "./utils";
 
-export interface CheckboxProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
+export interface CheckboxProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, "type" | "size"> {
   label?: string;
-  indeterminate?: boolean;
-  disabled?: boolean;
-  className?: string;
+  size?: "sm" | "md" | "lg";
+  color?: "indigo" | "emerald" | "rose";
 }
 
-export function Checkbox({ checked, onChange, label, indeterminate = false, disabled = false, className }: CheckboxProps) {
-  const id = useId();
+const SIZE_MAP = {
+  sm: "w-3.5 h-3.5",
+  md: "w-4.5 h-4.5",
+  lg: "w-6 h-6",
+};
 
+const COLOR_MAP = {
+  indigo: "text-indigo-600 focus:ring-indigo-500",
+  emerald: "text-emerald-600 focus:ring-emerald-500",
+  rose: "text-rose-600 focus:ring-rose-500",
+};
+
+export function Checkbox({
+  label,
+  size = "md",
+  color = "indigo",
+  className,
+  id,
+  ...props
+}: CheckboxProps) {
+  const generatedId = React.useId();
+  const checkboxId = id || generatedId;
   return (
-    <label
-      htmlFor={id}
-      className={cn(
-        "inline-flex items-center gap-2.5",
-        disabled ? "opacity-50 cursor-not-allowed" : "cursor-pointer",
-        className
-      )}
-    >
-      <div className="relative flex-shrink-0">
-        <input
-          id={id}
-          type="checkbox"
-          checked={checked}
-          disabled={disabled}
-          onChange={(e) => onChange(e.target.checked)}
-          ref={(el) => {
-            if (el) el.indeterminate = indeterminate;
-          }}
-          className="sr-only"
-        />
-        <div
+    <div className={cn("flex items-center gap-2", className)}>
+      <input
+        type="checkbox"
+        id={checkboxId}
+        className={cn(
+          "rounded border-slate-300 transition-colors cursor-pointer",
+          SIZE_MAP[size],
+          COLOR_MAP[color],
+        )}
+        {...props}
+      />
+      {label && (
+        <label
+          htmlFor={checkboxId}
           className={cn(
-            "w-4 h-4 rounded border-2 flex items-center justify-center transition-colors",
-            checked || indeterminate
-              ? "bg-indigo-500 border-indigo-500"
-              : "bg-white border-slate-300 hover:border-indigo-400"
+            "text-slate-700 font-medium cursor-pointer select-none",
+            size === "sm" ? "text-xs" : size === "md" ? "text-sm" : "text-base"
           )}
         >
-          {indeterminate ? (
-            <span className="block w-2 h-0.5 bg-white rounded-full" />
-          ) : checked ? (
-            <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-            </svg>
-          ) : null}
-        </div>
-      </div>
-      {label && (
-        <span className="text-sm font-medium text-slate-700 select-none">{label}</span>
+          {label}
+        </label>
       )}
-    </label>
+    </div>
   );
 }

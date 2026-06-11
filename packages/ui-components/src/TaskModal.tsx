@@ -1,12 +1,11 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { cn } from "./utils";
+import { useState, useEffect } from "react";
 import { Button } from "./Button";
 import { Input } from "./Input";
 import { Textarea } from "./Textarea";
 import { Select } from "./Select";
 
-export type Priority = "high" | "medium" | "low";
+export type Priority = "urgent" | "high" | "medium" | "low";
 export type Status = "todo" | "in-progress" | "done" | "cancelled";
 
 export interface TaskFormData {
@@ -46,13 +45,13 @@ export function TaskModal({
     if (open) setForm({ ...DEFAULT, ...initialData });
   }, [open, initialData]);
 
-  function set(key: keyof TaskFormData, value: string) {
+  function set<K extends keyof TaskFormData>(key: K, value: TaskFormData[K]) {
     setForm((f) => ({ ...f, [key]: value }));
     setErrors((e) => ({ ...e, [key]: undefined }));
   }
 
   function validate() {
-    const errs: typeof errors = {};
+    const errs: Partial<Record<keyof TaskFormData, string>> = {};
     if (!form.title.trim()) errs.title = "Title is required";
     else if (form.title.trim().length < 2) errs.title = "Title must be at least 2 characters";
     return errs;
@@ -74,7 +73,13 @@ export function TaskModal({
       <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
           <h2 className="text-base font-bold text-slate-900">{title}</h2>
-          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors">
+          <button 
+            type="button" 
+            onClick={onClose} 
+            className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-700 transition-colors"
+            title="Close"
+            aria-label="Close modal"
+          >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -92,7 +97,7 @@ export function TaskModal({
           />
           <Textarea
             label="Description"
-            value={form.description}
+            value={form.description ?? ""}
             onChange={(e) => set("description", e.target.value)}
             placeholder="Add a description..."
             rows={3}
@@ -101,7 +106,7 @@ export function TaskModal({
             <Select
               label="Priority"
               value={form.priority}
-              onChange={(e) => set("priority", e.target.value)}
+              onChange={(e) => set("priority", e.target.value as Priority)}
               options={[
                 { value: "high", label: "High" },
                 { value: "medium", label: "Medium" },
@@ -111,7 +116,7 @@ export function TaskModal({
             <Select
               label="Status"
               value={form.status}
-              onChange={(e) => set("status", e.target.value)}
+              onChange={(e) => set("status", e.target.value as Status)}
               options={[
                 { value: "todo", label: "To Do" },
                 { value: "in-progress", label: "In Progress" },
@@ -123,7 +128,7 @@ export function TaskModal({
           <Input
             label="Due Date"
             type="date"
-            value={form.dueDate}
+            value={form.dueDate ?? ""}
             onChange={(e) => set("dueDate", e.target.value)}
           />
           {assigneeOptions.length > 0 && (
@@ -146,7 +151,7 @@ export function TaskModal({
           )}
           <Input
             label="Tags"
-            value={form.tags}
+            value={form.tags ?? ""}
             onChange={(e) => set("tags", e.target.value)}
             placeholder="design, frontend, urgent (comma-separated)"
             hint="Separate multiple tags with commas"

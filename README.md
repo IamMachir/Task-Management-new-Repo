@@ -15,6 +15,8 @@
 | **Submission** | May 2026 |
 | **Repository** | https://github.com/IamMachir/Task-Management-new-Repo |
 
+The assignment information defines the course context, deliverable deadline, and the repository used for version control. This helps reviewers understand that the repository is both a learning project and a collaborative course assignment.
+
 ---
 
 ## Group Members
@@ -27,11 +29,15 @@
 | Musbah Rida | UGE/27831/14 | Contributor |
 | Samuel Girma | UGE/27830/14 | Contributor |
 
+The group member list shows the team structure and roles used during development. Each member owns different aspects of the project, which is useful for tracking responsibility and collaboration in a course submission.
+
 ---
 
 ## What We Built
 
 This project is a **Task Management Dashboard** built as a **Turborepo monorepo** — a single repository containing two fully functional web apps powered by one shared library of reusable components and utility functions.
+
+The design goal is to separate core UI logic and helper code into shared packages, while keeping each app shell focused on its own page layout and task flow. This makes it easier to extend the system with new screens or shared features without duplicating code.
 
 ### The Two Apps
 
@@ -40,6 +46,8 @@ This project is a **Task Management Dashboard** built as a **Turborepo monorepo*
 | `apps/feature-x` | **TeamFlow** | 3000 | Kanban board for team task management with drag & drop, project switching, team assignment, and statistics |
 | `apps/feature-y` | **PersonalFocus** | 3001 | Personal productivity planner with daily task list, habit tracker, Pomodoro timer, and productivity stats |
 
+Both applications are built on the same shared packages, so they can reuse identical UI components and helper logic while still offering distinct workflows.
+
 ### The Two Shared Packages
 
 | Package | Name | Description |
@@ -47,9 +55,13 @@ This project is a **Task Management Dashboard** built as a **Turborepo monorepo*
 | `packages/ui-components` | `@cbsd/ui-components` | 27 reusable React components used by both apps |
 | `packages/utils` | `@cbsd/utils` | 30+ shared utility functions and TypeScript type definitions |
 
+Both packages are designed to be imported by the apps as workspace dependencies, so shared behavior stays consistent across TeamFlow and PersonalFocus. The apps themselves remain lightweight wrappers that compose UI and business logic from these shared packages.
+
 ---
 
 ## Features
+
+The features below describe the main capabilities of each app and how they reflect real-world task management needs.
 
 ### TeamFlow (`apps/feature-x`) 🗂️
 
@@ -61,6 +73,8 @@ This project is a **Task Management Dashboard** built as a **Turborepo monorepo*
 - **Compact Mode** — Toggle dense/comfortable layout via Switch component
 - **Persistent State** — All data saved to localStorage, survives page refresh
 
+These TeamFlow features are built to demonstrate collaborative task management in a shared workspace style, while keeping the interface responsive and easy to scan.
+
 ### PersonalFocus (`apps/feature-y`) 📅
 
 - **Today View** — Daily task list with weekly calendar overview
@@ -69,6 +83,8 @@ This project is a **Task Management Dashboard** built as a **Turborepo monorepo*
 - **Pomodoro Timer** — 25-minute focus sessions with start/pause control
 - **Statistics Dashboard** — Productivity score, completion charts, overdue counts
 - **Persistent State** — All data saved to localStorage
+
+PersonalFocus is intentionally designed for individual productivity, with daily planning and habit tracking that complements the stronger team-oriented workflow in TeamFlow.
 
 ---
 
@@ -134,6 +150,7 @@ Task-Management-new-Repo/
 │   │   │   ├── StatsCard.tsx
 │   │   │   ├── UserAvatar.tsx
 │   │   │   ├── AvatarGroup.tsx
+│   │   │   ├── Mane.tsx
 │   │   │   ├── SearchInput.tsx
 │   │   │   ├── FilterBar.tsx
 │   │   │   ├── Sidebar.tsx
@@ -166,6 +183,8 @@ Task-Management-new-Repo/
 └── README.md
 ```
 
+This structure enforces a clear boundary between app-specific pages and shared implementation details. Apps in `apps/` import UI and utilities from `packages/`, which improves reuse and keeps the codebase maintainable.
+
 ---
 
 ## Technology Stack
@@ -180,11 +199,15 @@ Task-Management-new-Repo/
 | [class-variance-authority](https://cva.style/) | 0.7.x | Variant-based component styling |
 | [clsx](https://github.com/lukeed/clsx) + [tailwind-merge](https://github.com/nicolo-ribaudo/tailwind-merge) | latest | Safe Tailwind class merging |
 
+The stack was chosen to support a fast frontend developer experience: Turborepo for workspace orchestration, pnpm for efficient dependency management, Next.js for App Router structure, and Tailwind for consistent design without custom CSS frameworks.
+
 ---
 
 ## Component Library (`@cbsd/ui-components`)
 
 All components are pure Tailwind CSS — no external UI framework dependencies.
+
+The shared component library is intentionally built so that styling, spacing, and interaction patterns are reusable across both apps. New UI elements should be added here first, then exported through `@cbsd/ui-components` for use in app pages.
 
 ### Base Components
 
@@ -248,6 +271,8 @@ All components are pure Tailwind CSS — no external UI framework dependencies.
 
 Pure TypeScript functions — no React dependency.
 
+The utility package is responsible for shared logic only: date formatting, ID generation, filters, storage helpers, and type definitions. It keeps business logic separate from presentation so both apps can reuse the same behavior consistently.
+
 | Module | Key Exports |
 |--------|------------|
 | `types.ts` | `Task`, `Project`, `TeamMember`, `Habit`, `Priority`, `Status`, `FilterOptions` |
@@ -265,11 +290,15 @@ Pure TypeScript functions — no React dependency.
 
 ## Getting Started
 
+This repo is managed as a monorepo, so most development tasks are run from the root folder. The root scripts coordinate builds and dev servers across both apps and shared packages.
+
 ### Prerequisites
 
 - **Node.js** v18 or newer → https://nodejs.org
 - **pnpm** → `npm install -g pnpm`
 - **Git** → https://git-scm.com
+
+These versions are chosen to match the monorepo tools and Next.js 15 compatibility. Using older Node or pnpm versions can lead to installation or runtime issues in this workspace.
 
 ### Installation
 
@@ -350,6 +379,8 @@ const [isCompact, setIsCompact] = useState(false);
 
 ### Using Tooltip
 
+Tooltips are best used for supplemental information that appears on hover or focus, rather than as the primary label for a control. Use them to clarify actions in dense UI patterns.
+
 ```tsx
 import { Tooltip, Button } from "@cbsd/ui-components";
 
@@ -359,6 +390,8 @@ import { Tooltip, Button } from "@cbsd/ui-components";
 ```
 
 ### Using Skeleton (loading state)
+
+Skeletons help keep the interface feeling responsive by showing a placeholder layout while actual data is still loading. This prevents flicker and improves perceived performance.
 
 ```tsx
 import { Skeleton } from "@cbsd/ui-components";
@@ -372,6 +405,8 @@ import { Skeleton } from "@cbsd/ui-components";
 ```
 
 ### Using utility functions
+
+These utilities should be used for shared business logic and formatting, not UI rendering. Keep data transformation inside `@cbsd/utils` and visual rendering inside `@cbsd/ui-components`.
 
 ```tsx
 import {

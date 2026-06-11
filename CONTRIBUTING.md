@@ -586,63 +586,95 @@ import type { Task, Priority } from "@cbsd/utils";
 
 ## 12. Quick reference: what already exists
 
+This section is your fast look-up for the shared building blocks already available in the repo. Use these components and utilities instead of re-creating the same behavior in an app.
+
 ### Components in `@cbsd/ui-components`
+
+These components are the reusable UI primitives for both TeamFlow and PersonalFocus. Each component is exported from `packages/ui-components/src/index.ts`, so apps should import from `@cbsd/ui-components` and never from a deep path.
+
+Use these components when you need:
+- consistent buttons, input controls, modals, badges, and form elements
+- task cards and task editing UIs that match the existing dashboard style
+- layout building blocks like cards, sidebars, and tables
+- modals, dialogs, and empty-state patterns that already follow the app design
+
+If a component is not listed here, add it to `packages/ui-components` first and then export it from `src/index.ts`.
 
 | Component | Props summary | Use case |
 |-----------|---------------|---------|
-| `Button` | `variant`, `size`, `loading` | Any clickable button |
-| `Input` | `label`, `error`, `hint`, `leftIcon` | Text fields |
-| `Textarea` | `label`, `error`, `hint` | Multi-line text |
-| `Select` | `label`, `options[]`, `placeholder` | Dropdowns |
-| `TaskCard` | `title`, `priority`, `status`, `dueDate`, `assignee`, `tags` | Display a single task |
-| `TaskModal` | `open`, `onClose`, `onSubmit`, `initialData` | Create/edit task form |
-| `KanbanColumn` | `status`, `tasks[]`, `onAddTask`, drag events | Drag & drop column |
-| `PriorityBadge` | `priority` | "High" / "Medium" / "Low" label |
-| `StatusBadge` | `status` | "To Do" / "In Progress" / "Done" label |
-| `ProgressBar` | `value`, `max`, `label`, `color` | Linear progress |
-| `ProgressCircle` | `value`, `max`, `size`, `color`, `label` | Circular progress ring |
-| `StatsCard` | `title`, `value`, `subtitle`, `icon`, `trend` | Metric display |
-| `UserAvatar` | `name`, `src`, `size` | Avatar with initials fallback |
-| `AvatarGroup` | `users[]`, `max` | Stacked avatars |
-| `SearchInput` | `value`, `onChange`, `debounceMs` | Search box |
-| `FilterBar` | `search`, priorities, statuses, callbacks | Combined filter UI |
-| `Sidebar` | `sections[]`, `activeId`, `onSelect`, `header`, `footer` | Nav sidebar |
-| `EmptyState` | `title`, `description`, `icon`, `action` | Zero-state placeholder |
-| `ConfirmationDialog` | `open`, `title`, `onConfirm`, `onCancel`, `variant` | Delete confirmation |
+| `Button` | `variant`, `size`, `loading`, `disabled`, `type` | Any clickable button with consistent styling |
+| `Input` | `label`, `error`, `hint`, `leftIcon`, `value`, `onChange` | Text fields with built-in labels and validation support |
+| `Textarea` | `label`, `error`, `hint`, `value`, `onChange` | Multi-line text input for comments or descriptions |
+| `Select` | `label`, `options[]`, `placeholder`, `value`, `onChange` | Dropdown selector for controlled option input |
+| `TaskCard` | `title`, `priority`, `status`, `dueDate`, `assignee`, `tags` | Display a single task summary in lists and boards |
+| `TaskModal` | `open`, `onClose`, `onSubmit`, `initialData`, `assigneeOptions` | Create/edit task form dialog with reusable fields |
+| `KanbanColumn` | `status`, `tasks[]`, `onAddTask`, drag events | Drag & drop column for kanban board sections |
+| `PriorityBadge` | `priority` | Color-coded badge for task priority levels |
+| `StatusBadge` | `status` | Color-coded badge for task status labels |
+| `ProgressBar` | `value`, `max`, `label`, `color` | Linear progress visualization for goals and stats |
+| `ProgressCircle` | `value`, `max`, `size`, `color`, `label` | Circular progress ring for dashboard metrics |
+| `StatsCard` | `title`, `value`, `subtitle`, `icon`, `trend` | Metric card for dashboard overview panels |
+| `UserAvatar` | `name`, `src`, `size` | Avatar with initials fallback and image support |
+| `AvatarGroup` | `users[]`, `max` | Stacked avatar group for team member previews |
+| `SearchInput` | `value`, `onChange`, `debounceMs`, `placeholder` | Search field with debounce to reduce frequent updates |
+| `FilterBar` | `search`, `priorities`, `statuses`, `onSearchChange`, `onFilterChange` | Combined search + filter control panel |
+| `Sidebar` | `sections[]`, `activeId`, `onSelect`, `header`, `footer` | Navigation sidebar for apps and project selection |
+| `EmptyState` | `title`, `description`, `icon`, `action` | Placeholder UI for empty lists or no-data screens |
+| `ConfirmationDialog` | `open`, `title`, `description`, `onConfirm`, `onCancel`, `variant` | Confirm modal for destructive or important actions |
+
+#### How to choose the right component
+- use `Button` for any clickable action and prefer `variant="primary"` for the main call to action and `variant="ghost"` for secondary links
+- use `Input`, `Textarea`, and `Select` for form controls so styling and validation appearance stay consistent
+- use `TaskCard` for task listings and `TaskModal` for add/edit task dialogs instead of rebuilding form markup
+- use `StatusBadge` and `PriorityBadge` for status/priority labels so the color language stays the same across screens
+- use layout components like `Card`, `Sidebar`, and `StatsCard` for page structure rather than custom panels
 
 ### Utilities in `@cbsd/utils`
+
+The utilities package contains pure helper functions and shared types that support both apps. It does not contain React components or JSX. Use these helpers for logic, formatting, filtering, and storage.
+
+Common patterns:
+- put date-related helpers in `dateUtils.ts`
+- put priority and status helpers in `priorityHelpers.ts` / `statusHelpers.ts`
+- put task filtering and grouping logic in `taskFilters.ts`
+- put persistence helpers in `storageHelpers.ts`
+- keep type definitions in `types.ts`
 
 | Function | File | What it does |
 |----------|------|-------------|
 | `formatDate(date, format)` | `dateUtils` | Formats dates as "Jan 5, 2025" or relative "2d ago" |
 | `isOverdue(date)` | `dateUtils` | Returns `true` if date is in the past |
 | `daysUntilDue(date)` | `dateUtils` | Number of days left (negative = overdue) |
-| `isToday(date)` | `dateUtils` | Returns `true` if date is today |
+| `isToday(date)` | `dateUtils` | Returns `true` if a date is today |
 | `getWeekDates()` | `dateUtils` | Array of 7 Date objects for the current week |
 | `generateId(prefix?)` | `idUtils` | Creates a unique ID like `task-abc123` |
-| `getPriorityConfig(priority)` | `priorityHelpers` | Returns `{ label, color, bgColor, sortOrder }` |
+| `getPriorityConfig(priority)` | `priorityHelpers` | Returns `{ label, color, bgColor, sortOrder }` for UI display |
 | `sortByPriority(items)` | `priorityHelpers` | Sorts array by priority (high first) |
-| `getStatusConfig(status)` | `statusHelpers` | Returns `{ label, color, bgColor }` |
+| `getStatusConfig(status)` | `statusHelpers` | Returns `{ label, color, bgColor }` for status display |
 | `filterTasks(tasks, options)` | `taskFilters` | Filter by status, priority, search, dates |
 | `sortTasks(tasks, by, dir)` | `taskFilters` | Sort by priority, dueDate, createdAt, title |
-| `groupTasksByStatus(tasks)` | `taskFilters` | Returns `{ todo: [], "in-progress": [], done: [], cancelled: [] }` |
+| `groupTasksByStatus(tasks)` | `taskFilters` | Returns grouped tasks by status for dashboard views |
 | `getTasksDueToday(tasks)` | `taskFilters` | Returns tasks due today |
 | `getOverdueTasks(tasks)` | `taskFilters` | Returns unfinished overdue tasks |
-| `loadFromStorage(key, default)` | `storageHelpers` | Read from localStorage safely |
+| `loadFromStorage(key, defaultValue)` | `storageHelpers` | Read from localStorage safely with fallback |
 | `saveToStorage(key, data)` | `storageHelpers` | Write to localStorage safely |
-| `TEAMFLOW_KEYS` | `storageHelpers` | Storage key constants for TeamFlow |
-| `PERSONALFOCUS_KEYS` | `storageHelpers` | Storage key constants for PersonalFocus |
-| `getInitials(name)` | `stringHelpers` | "John Doe" → "JD" |
-| `truncate(str, maxLen)` | `stringHelpers` | Cut long strings with "..." |
-| `validateTaskTitle(title)` | `validationHelpers` | Returns error string or `null` |
-| `calculateCompletionPercentage(tasks)` | `statsHelpers` | 0–100% completion |
-| `getTaskStatsByStatus(tasks)` | `statsHelpers` | `{ total, todo, inProgress, done, overdue }` |
-| `calculateProductivityScore(tasks)` | `statsHelpers` | 0–100 score based on completion + priority |
-| `calculateHabitStreak(habit)` | `statsHelpers` | Number of consecutive days completed |
+| `TEAMFLOW_KEYS` | `storageHelpers` | Storage key constants specific to TeamFlow |
+| `PERSONALFOCUS_KEYS` | `storageHelpers` | Storage key constants specific to PersonalFocus |
+| `getInitials(name)` | `stringHelpers` | "John Doe" → "JD" for avatar fallback |
+| `truncate(str, maxLen)` | `stringHelpers` | Shortens text and appends "..." if too long |
+| `validateTaskTitle(title)` | `validationHelpers` | Returns an error string or `null` for task title validation |
+| `calculateCompletionPercentage(tasks)` | `statsHelpers` | Calculates project completion rate as a percentage |
+| `getTaskStatsByStatus(tasks)` | `statsHelpers` | Returns counts for todo, inProgress, done, and overdue |
+| `calculateProductivityScore(tasks)` | `statsHelpers` | Returns a normalized productivity score based on task completion |
+| `calculateHabitStreak(habit)` | `statsHelpers` | Number of consecutive days a habit has been completed |
+
+#### Best practices for utilities
+- import only the helpers you need, e.g. `import { formatDate } from "@cbsd/utils"`
+- keep utilities pure: they should not read browser APIs directly unless they are explicitly storage helpers
+- avoid putting UI formatting helpers in utilities unless they are generic enough for both apps
+- if a helper is only used by one app and not shared, prefer adding it to the app rather than to `@cbsd/utils`
 
 ---
-
-## 13. Common mistakes to avoid
 
 | Mistake | Why it's wrong | Fix |
 |---------|---------------|-----|

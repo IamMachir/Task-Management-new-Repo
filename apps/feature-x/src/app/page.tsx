@@ -1,44 +1,50 @@
 "use client";
-import React, { useState, useCallback } from "react";
+
+import { useState, useEffect, type DragEvent } from "react";
+import { useRouter } from "next/navigation";
 import {
-  KanbanColumn, TaskModal, StatsCard, FilterBar,
-  Sidebar, EmptyState, ConfirmationDialog, UserAvatar, Button,
+  KanbanColumn, TaskModal, StatsCard, FilterBar, ActivityHub,
+  Sidebar, ConfirmationDialog, UserAvatar, Button,
   Card, CardHeader, CardTitle, Badge, Alert, Tooltip, Switch, Skeleton,
-  NotificationToast,
+  Table, TableHeader, TableBody, TableRow, TableHead, TableCell,
 } from "@cbsd/ui-components";
-import type { TaskFormData, ToastVariant } from "@cbsd/ui-components";
-import type { Task, Status } from "@cbsd/utils";
+import type { TaskFormData } from "@cbsd/ui-components";
+import type { Task, Status, Priority } from "@cbsd/utils";
 import {
-  filterTasks, getStatusLabel, formatDate, calculateCompletionPercentage,
-  TEAMFLOW_KEYS, loadFromStorage, saveToStorage, generateId,
+  filterTasks, getStatusLabel, calculateCompletionPercentage,
 } from "@cbsd/utils";
 import { useTasks } from "../hooks/useTasks";
 import { MOCK_PROJECTS, MOCK_MEMBERS } from "../data/mockData";
 
-const KANBAN_STATUSES: Status[] = ["todo", "in-progress", "done"];
-
-interface ToastItem {
-  id: string;
-  message: string;
-  title?: string;
-  variant: ToastVariant;
-}
+const KANBAN_STATUSES: Status[] = ["todo", "in-progress", "done", "cancelled"];
 
 export default function TeamFlowPage() {
+  const [isMounted, setIsMounted] = useState(false);
+  const router = useRouter();
   const [activeProject, setActiveProject] = useState<string>("all");
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const [modalOpen, setModalOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [defaultStatus, setDefaultStatus] = useState<Status>("todo");
   const [search, setSearch] = useState("");
   const [draggingId, setDraggingId] = useState<string | null>(null);
-  const [view, setView] = useState<"kanban" | "stats">("kanban");
+  const [view, setView] = useState<"kanban" | "stats" | "table" | "activity">("kanban");
   const [isCompact, setIsCompact] = useState(false);
   const [showWelcomeAlert, setShowWelcomeAlert] = useState(true);
-  const [toasts, setToasts] = useState<ToastItem[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const tasksPerPage = 10;
 
   const projectId = activeProject === "all" ? undefined : activeProject;
-  const { tasks, addTask, updateTask, deleteTask, moveTask, stats, grouped } = useTasks(projectId);
+  const { tasks, addTask, updateTask, deleteTask, moveTask, stats } = useTasks(projectId);
+
+  if (!isMounted) {
+    return <div className="flex h-screen bg-white" />;
+  }
 
   const filtered = filterTasks(tasks, { search: search || undefined });
 
@@ -52,28 +58,29 @@ export default function TeamFlowPage() {
   const getMember = (id?: string) => MOCK_MEMBERS.find((m) => m.id === id);
   const getProject = (id?: string) => MOCK_PROJECTS.find((p) => p.id === id);
 
-  function showToast(message: string, variant: ToastVariant = "info", title?: string) {
-    const id = Math.random().toString(36).slice(2);
-    setToasts((prev) => [...prev, { id, message, variant, title }]);
-  }
-
-  function dismissToast(id: string) {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }
-
   function handleSubmit(data: TaskFormData) {
     const tags = data.tags ? data.tags.split(",").map((t) => t.trim()).filter(Boolean) : [];
     if (editingTask) {
-      updateTask(editingTask.id, { ...data, tags, status: data.status as Status });
-      showToast("Task updated successfully.", "success", "Task Updated");
+      updateTask(editingTask.id, {
+        ...data,
+        tags,
+        status: data.status as Status,
+        priority: data.priority as Priority,
+      });
     } else {
-      addTask({ ...data, tags, status: data.status as Status });
-      showToast(`"${data.title}" added to ${getStatusLabel(data.status as Status)}.`, "success", "Task Created");
+      addTask({
+        ...data,
+        tags,
+        status: data.status as Status,
+        priority: data.priority as Priority,
+      });
     }
     setEditingTask(null);
   }
 
-  function handleEdit(task: Task) {
+  function handleEdit(taskId: string) {
+    const task = tasks.find((t) => t.id === taskId);
+    if (!task) return;
     setEditingTask(task);
     setModalOpen(true);
   }
@@ -84,17 +91,15 @@ export default function TeamFlowPage() {
     setModalOpen(true);
   }
 
-  function handleDragStart(e: React.DragEvent, taskId: string) {
+  function handleDragStart(e: DragEvent, taskId: string) {
     e.dataTransfer.setData("taskId", taskId);
     setDraggingId(taskId);
   }
 
-  function handleDrop(e: React.DragEvent, status: Status) {
+  function handleDrop(e: DragEvent, status: Status) {
+    e.preventDefault();
     const taskId = e.dataTransfer.getData("taskId");
-    if (taskId) {
-      moveTask(taskId, status);
-      showToast(`Task moved to ${getStatusLabel(status)}.`, "info");
-    }
+    if (taskId) moveTask(taskId, status);
     setDraggingId(null);
   }
 
@@ -120,6 +125,8 @@ export default function TeamFlowPage() {
       items: [
         { id: "v:kanban", label: "Kanban Board", icon: <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2"/></svg> },
         { id: "v:stats", label: "Statistics", icon: <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg> },
+        { id: "v:table", label: "Table View", icon: <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M3 14h18m-9-4v8m-7 0h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg> },
+        { id: "v:activity", label: "Activity Hub", icon: <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}><path strokeLinecap="round" strokeLinejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg> },
       ],
     },
   ];
@@ -134,28 +141,31 @@ export default function TeamFlowPage() {
         activeId={activeProject}
         onSelect={(id) => {
           if (id.startsWith("v:")) {
-            setView(id === "v:stats" ? "stats" : "kanban");
+            if (id === "v:stats") setView("stats");
+            else if (id === "v:table") setView("table");
+            else if (id === "v:activity") setView("activity");
+            else setView("kanban");
           } else {
             setActiveProject(id);
           }
         }}
         header={
-          <div>
+          <div className="px-2">
             <div className="flex items-center gap-2 mb-1">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500 flex items-center justify-center shadow-lg shadow-indigo-200/50">
                 <span className="text-white font-bold text-sm">TF</span>
               </div>
-              <span className="font-bold text-white text-base">TeamFlow</span>
+              <span className="font-bold text-white text-base tracking-tight">TeamFlow</span>
             </div>
-            <p className="text-xs text-slate-400">Team Task Management</p>
+            <p className="text-[10px] text-slate-400 font-medium uppercase tracking-wider">Team Task Management</p>
           </div>
         }
         footer={
-          <div className="flex items-center gap-2">
-            <UserAvatar name="Dawit Bekele" size="sm" />
-            <div>
-              <p className="text-xs font-medium text-slate-300">Dawit Bekele</p>
-              <p className="text-xs text-slate-500">Engineering Lead</p>
+          <div className="flex items-center gap-2 bg-slate-800/50 p-2 rounded-xl border border-slate-700/50">
+            <UserAvatar name="Alex Johnson" size="sm" className="ring-offset-slate-900" />
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-slate-200 truncate">Alex Johnson</p>
+              <p className="text-[10px] text-slate-500 font-medium truncate uppercase">Engineering Lead</p>
             </div>
           </div>
         }
@@ -187,20 +197,23 @@ export default function TeamFlowPage() {
                 New Task
               </Button>
             </Tooltip>
+            {/* Chat button */}
+            <Button type="button" variant="ghost" onClick={() => router.push('/chat')} className="ml-2">Chat</Button>
           </div>
         </header>
 
         {/* Stats strip */}
         <div className="bg-white border-b border-slate-100 px-6 py-3 flex items-center gap-6 flex-shrink-0">
-          {[
-            { label: "Total", value: stats.total, color: "primary" },
-            { label: "To Do", value: stats.todo, color: "secondary" },
-            { label: "In Progress", value: stats.inProgress, color: "primary" },
-            { label: "Done", value: stats.done, color: "success" },
-            { label: "Overdue", value: stats.overdue, color: "error" },
-          ].map(({ label, value, color }) => (
+          {([
+            { label: "Total", value: stats.total, color: "primary" as const },
+            { label: "To Do", value: stats.todo, color: "secondary" as const },
+            { label: "In Progress", value: stats.inProgress, color: "primary" as const },
+            { label: "Done", value: stats.done, color: "success" as const },
+            { label: "Overdue", value: stats.overdue, color: "error" as const },
+            { label: "Cancelled", value: filteredGrouped.cancelled.length, color: "ghost" as const },
+          ] as const).map(({ label, value, color }) => (
             <div key={label} className="flex items-center gap-1.5">
-              <Badge variant={color as any} size="md" className="font-bold">{value}</Badge>
+              <Badge variant={color} size="md" className="font-bold">{value}</Badge>
               <span className="text-xs text-slate-400 font-medium">{label}</span>
             </div>
           ))}
@@ -224,7 +237,7 @@ export default function TeamFlowPage() {
             >
               <div className="flex justify-between items-center w-full">
                 <span>Manage your team's tasks efficiently with our new Kanban board.</span>
-                <button onClick={() => setShowWelcomeAlert(false)} className="text-xs font-bold underline">Dismiss</button>
+                <button type="button" onClick={() => setShowWelcomeAlert(false)} className="text-xs font-bold underline">Dismiss</button>
               </div>
             </Alert>
           )}
@@ -258,15 +271,15 @@ export default function TeamFlowPage() {
                       const ptasks = tasks.filter((t) => t.projectId === p.id);
                       const pct = ptasks.length > 0 ? Math.round((ptasks.filter((t) => t.status === "done").length / ptasks.length) * 100) : 0;
                       return (
-                        <div key={p.id}>
-                          <div className="flex justify-between items-center mb-1.5">
-                            <span className="text-xs font-bold text-slate-700">{p.name}</span>
-                            <Badge variant="ghost" size="xs" className="text-slate-400">{ptasks.length} tasks · {pct}%</Badge>
+                          <div key={p.id} className="group/project">
+                            <div className="flex justify-between items-center mb-1.5">
+                              <span className="text-xs font-bold text-slate-700 group-hover/project:text-indigo-600 transition-colors">{p.name}</span>
+                              <Badge variant="ghost" size="xs" className="text-slate-400 group-hover/project:text-indigo-400">{ptasks.length} tasks · {pct}%</Badge>
+                            </div>
+                            <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden ring-1 ring-inset ring-slate-200/50">
+                              <div className="h-full rounded-full transition-all duration-700 ease-out" style={{ width: `${pct}%`, background: p.color }} />
+                            </div>
                           </div>
-                          <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                            <div className="h-full rounded-full transition-all duration-500" style={{ width: `${pct}%`, background: p.color }} />
-                          </div>
-                        </div>
                       );
                     })}
                   </div>
@@ -299,6 +312,96 @@ export default function TeamFlowPage() {
                 </Card>
               </div>
             </>
+          ) : view === "table" ? (
+            <div className="space-y-6">
+              <Card padding="none" className="overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[300px]">Title</TableHead>
+                      <TableHead>Project</TableHead>
+                      <TableHead>Assignee</TableHead>
+                      <TableHead>Priority</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Due Date</TableHead>
+                      <TableHead className="text-right">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filtered.slice((currentPage - 1) * tasksPerPage, currentPage * tasksPerPage).map((t) => (
+                      <TableRow key={t.id}>
+                        <TableCell className="font-medium text-slate-900">{t.title}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className="w-2 h-2 rounded-full" style={{ background: getProject(t.projectId)?.color }} />
+                            <span className="text-xs text-slate-600">{getProject(t.projectId)?.name}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <UserAvatar name={getMember(t.assigneeId)?.name || "Unassigned"} size="sm" />
+                            <span className="text-xs text-slate-600">{getMember(t.assigneeId)?.name || "Unassigned"}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={t.priority === "high" ? "error" : t.priority === "medium" ? "warning" : "secondary"} size="xs" className="uppercase font-black tracking-tighter">
+                            {t.priority}
+                          </Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={t.status === "done" ? "success" : t.status === "in-progress" ? "primary" : t.status === "cancelled" ? "ghost" : "secondary"} size="xs" className="rounded-full">
+                            {getStatusLabel(t.status)}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="text-xs text-slate-500">{t.dueDate || "-"}</TableCell>
+                        <TableCell className="text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="sm" onClick={() => handleEdit(t.id)}>Edit</Button>
+                            <Button variant="danger" size="sm" onClick={() => setDeleteTarget(t.id)}>Delete</Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Card>
+              <div className="flex justify-center">
+                <div className="flex items-center gap-1">
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  >
+                    {"<<"}
+                  </Button>
+                  {Array.from({ length: Math.ceil(filtered.length / tasksPerPage) }, (_, i) => (
+                    <Button
+                      key={i + 1}
+                      variant={currentPage === i + 1 ? "primary" : "ghost"}
+                      size="sm"
+                      onClick={() => setCurrentPage(i + 1)}
+                    >
+                      {i + 1}
+                    </Button>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    disabled={currentPage === Math.ceil(filtered.length / tasksPerPage)}
+                    onClick={() => setCurrentPage(p => Math.min(Math.ceil(filtered.length / tasksPerPage), p + 1))}
+                  >
+                    {">>"}
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ) : view === "activity" ? (
+            <ActivityHub
+              tasks={tasks}
+              members={MOCK_MEMBERS}
+              currentUser={MOCK_MEMBERS[0]}
+            />
           ) : (
            <div className="flex gap-6 h-full min-h-[500px]">
               {KANBAN_STATUSES.map((status) => (
@@ -345,29 +448,9 @@ export default function TeamFlowPage() {
         title="Delete Task"
         description="This action cannot be undone. The task will be permanently removed."
         confirmLabel="Delete"
-        onConfirm={() => {
-          if (deleteTarget) {
-            deleteTask(deleteTarget);
-            showToast("Task deleted.", "error", "Deleted");
-          }
-          setDeleteTarget(null);
-        }}
+        onConfirm={() => { if (deleteTarget) deleteTask(deleteTarget); setDeleteTarget(null); }}
         onCancel={() => setDeleteTarget(null)}
       />
-
-      {/* Toast container */}
-      <div className="fixed bottom-4 right-4 z-50 flex flex-col gap-2 w-80 pointer-events-none">
-        {toasts.map((toast) => (
-          <div key={toast.id} className="pointer-events-auto">
-            <NotificationToast
-              message={toast.message}
-              title={toast.title}
-              variant={toast.variant}
-              onDismiss={() => dismissToast(toast.id)}
-            />
-          </div>
-        ))}
-      </div>
     </div>
   );
 }

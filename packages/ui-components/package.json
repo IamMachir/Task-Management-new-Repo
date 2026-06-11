@@ -6,8 +6,8 @@
   "types": "./src/index.ts",
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src/",
-    "clean": "rm -rf .turbo"
+    "lint": "eslint src/ --ext .ts,.tsx",
+    "clean": "rimraf .turbo"
   },
   "dependencies": {
     "class-variance-authority": "^0.7.1",
@@ -17,7 +17,12 @@
   "devDependencies": {
     "typescript": "^6.0.3",
     "@types/react": "^19.2.17",
-    "@types/react-dom": "^19.2.3"
+    "@types/react-dom": "^19.2.3",
+    "eslint": "^9.16.0",
+    "@typescript-eslint/parser": "^6.12.0",
+    "@typescript-eslint/eslint-plugin": "^6.12.0",
+    "eslint-plugin-react": "^7.33.0",
+    "eslint-plugin-react-hooks": "^7.1.1"
   },
   "peerDependencies": {
     "react": "^19.0.0",

@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "clean": "rm -rf .next .turbo"
+    "clean": "rimraf .next .turbo"
   },
   "dependencies": {
     "@cbsd/ui-components": "workspace:*",

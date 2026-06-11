@@ -9,7 +9,9 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "interactivity": true,
+      "outputLogs": "new-only"
     },
     "lint": {
       "dependsOn": ["^lint"],
